@@ -20,70 +20,79 @@ reset="\e[0m"
 #------------------------------------------------------------------------------
 
 install_docker() {
-    echo -e "${amarelo}   Docker não encontrado. Tentando instalar...${reset}"
+    echo -e "<span class="math-inline">\{amarelo\}   Docker não encontrado\. Tentando instalar\.\.\.</span>{reset}"
     # Garante que curl está instalado antes de usar
     if ! command -v curl &> /dev/null; then
-        echo -e "${amarelo}   Comando 'curl' não encontrado. Tentando instalar curl...${reset}"
+        echo -e "<span class="math-inline">\{amarelo\}   Comando 'curl' não encontrado\. Tentando instalar curl\.\.\.</span>{reset}"
         sudo apt update -y > /dev/null 2>&1
         sudo apt install -y curl > /dev/null 2>&1
         if ! command -v curl &> /dev/null; then
-             echo -e "${vermelho}   ERRO: Falha ao instalar 'curl'. Não é possível baixar o instalador do Docker.${reset}"
+             echo -e "<span class="math-inline">\{vermelho\}   ERRO\: Falha ao instalar 'curl'\. Não é possível baixar o instalador do Docker\.</span>{reset}"
              return 1
         fi
-         echo -e "${verde}   'curl' instalado.${reset}"
+         echo -e "<span class="math-inline">\{verde\}   'curl' instalado\.</span>{reset}"
     fi
 
-    echo -e "${branco}   Baixando script de instalação oficial do Docker...${reset}"
+    echo -e "<span class="math-inline">\{branco\}   Baixando script de instalação oficial do Docker\.\.\.</span>{reset}"
     curl -fsSL https://get.docker.com -o get-docker.sh
-    if [ $? -ne 0 ]; then
-         echo -e "${vermelho}   ERRO: Falha ao baixar o script get-docker.sh.${reset}"
-         rm -f get-docker.sh # Limpa arquivo parcial
-         return 1
-    fi
-
-    echo -e "${branco}   Executando script de instalação do Docker (pode demorar um pouco)...${reset}"
-    sudo sh get-docker.sh
-    local install_status=$?
+    if [ <span class="math-inline">? \-ne 0 \]; then
+echo \-e "</span>{vermelho}   ERRO: Falha ao baixar o script get-docker.sh.<span class="math-inline">\{reset\}"
+rm \-f get\-docker\.sh \# Limpa arquivo parcial
+return 1
+fi
+echo \-e "</span>{branco}   Executando script de instalação do Docker (pode demorar um pouco)...<span class="math-inline">\{reset\}"
+\# Redireciona a saída detalhada do script para /dev/null para limpar o visual
+sudo sh get\-docker\.sh \> /dev/null 2\>&1
+local install\_status\=</span>?
     rm -f get-docker.sh # Remove o script baixado
 
-    if [ $install_status -eq 0 ]; then
-        echo -e "${verde}   Docker instalado com sucesso (aparentemente).${reset}"
-        # Garante que o serviço Docker está ativo e habilitado para iniciar com o sistema
-        sudo systemctl enable docker > /dev/null 2>&1
-        sudo systemctl start docker > /dev/null 2>&1
-        # Pequena pausa para garantir que o serviço suba
-        sleep 5
-        return 0 # Sucesso
-    else
-        echo -e "${vermelho}   ERRO: Falha ao executar o script de instalação do Docker (Status: ${install_status}).${reset}"
+    if [ <span class="math-inline">install\_status \-eq 0 \]; then
+echo \-e "</span>{verde}   Docker instalado com sucesso (aparentemente).<span class="math-inline">\{reset\}"
+\# Garante que o serviço Docker está ativo e habilitado para iniciar com o sistema
+sudo systemctl enable docker \> /dev/null 2\>&1
+sudo systemctl start docker \> /dev/null 2\>&1
+\# Pequena pausa para garantir que o serviço suba
+sleep 5
+\# Verifica se o comando docker agora existe
+if command \-v docker &\> /dev/null; then
+echo \-e "</span>{verde}   Verificação do comando Docker pós-instalação [ OK ]<span class="math-inline">\{reset\}"
+return 0 \# Sucesso
+else
+echo \-e "</span>{vermelho}   ERRO: Docker foi instalado, mas comando 'docker' ainda não encontrado no PATH?<span class="math-inline">\{reset\}"
+return 1
+fi
+else
+echo \-e "</span>{vermelho}   ERRO: Falha ao executar o script de instalação do Docker (Status: <span class="math-inline">\{install\_status\}\)\.</span>{reset}"
         return 1 # Falha
     fi
 }
 
 install_docker_compose() {
-    echo -e "${amarelo}   Docker Compose (V1 ou V2) não encontrado. Tentando instalar V2 (plugin)...${reset}"
+    echo -e "<span class="math-inline">\{amarelo\}   Docker Compose \(V1 ou V2\) não encontrado\. Tentando instalar V2 \(plugin\)\.\.\.</span>{reset}"
     sudo apt update -y > /dev/null 2>&1
     # Tenta instalar o plugin (funciona na maioria dos sistemas baseados em Debian/Ubuntu recentes)
-    sudo apt install -y docker-compose-plugin
+    sudo apt install -y docker-compose-plugin > /dev/null 2>&1 # Redireciona saída
     if command -v docker compose &> /dev/null; then
-        echo -e "${verde}   Docker Compose V2 (plugin) instalado com sucesso.${reset}"
+        echo -e "<span class="math-inline">\{verde\}   Docker Compose V2 \(plugin\) instalado com sucesso\.</span>{reset}"
         return 0 # Sucesso
     else
         # Se V2 falhou, tenta instalar V1 como fallback (comum em sistemas mais antigos)
-        echo -e "${amarelo}   Falha ao instalar V2 (plugin). Tentando instalar V1 (standalone)...${reset}"
+        echo -e "<span class="math-inline">\{amarelo\}   Falha ao instalar V2 \(plugin\)\. Tentando instalar V1 \(standalone\)\.\.\.</span>{reset}"
         local compose_version="1.29.2" # Use uma versão V1 estável conhecida
-        sudo curl -L "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        if [ $? -eq 0 ]; then
-            sudo chmod +x /usr/local/bin/docker-compose
-            if command -v docker-compose &> /dev/null; then
-                 echo -e "${verde}   Docker Compose V1 (standalone ${compose_version}) instalado com sucesso.${reset}"
+        sudo curl -L "https://github.com/docker/compose/releases/download/<span class="math-inline">\{compose\_version\}/docker\-compose\-</span>(uname -s)-<span class="math-inline">\(uname \-m\)" \-o /usr/local/bin/docker\-compose
+local curl\_status\=</span>?
+        # Verifica se o curl foi bem sucedido ANTES de tentar o chmod
+        if [ <span class="math-inline">curl\_status \-eq 0 \]; then
+sudo chmod \+x /usr/local/bin/docker\-compose
+if command \-v docker\-compose &\> /dev/null; then
+echo \-e "</span>{verde}   Docker Compose V1 (standalone <span class="math-inline">\{compose\_version\}\) instalado com sucesso\.</span>{reset}"
                  return 0 # Sucesso com V1
             else
-                 echo -e "${vermelho}   ERRO: Falha ao tornar docker-compose V1 executável ou encontrá-lo após download.${reset}"
+                 echo -e "<span class="math-inline">\{vermelho\}   ERRO\: Falha ao tornar docker\-compose V1 executável ou encontrá\-lo após download\.</span>{reset}"
                  return 1 # Falha
             fi
         else
-             echo -e "${vermelho}   ERRO: Falha ao baixar Docker Compose V1 (${compose_version}).${reset}"
+             echo -e "<span class="math-inline">\{vermelho\}   ERRO\: Falha ao baixar Docker Compose V1 \(</span>{compose_version}) (Status Curl: <span class="math-inline">\{curl\_status\}\)\.</span>{reset}"
              return 1 # Falha
         fi
     fi
@@ -98,9 +107,9 @@ nome_verificando(){
     clear
     echo ""
     # Ajustado para largura ~70
-    echo -e "$amarelo======================================================================${reset}"
-    echo -e "$amarelo= ${branco}Verificando Pré-requisitos...${reset}"
-    echo -e "$amarelo======================================================================${reset}"
+    echo -e "<span class="math-inline">amarelo\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
+    echo -e "$amarelo= <span class="math-inline">\{branco\}Verificando Pré\-requisitos\.\.\.</span>{reset}"
+    echo -e "<span class="math-inline">amarelo\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     echo ""
 }
 
@@ -109,28 +118,28 @@ nome_instalando(){
     clear
     echo ""
     # Separador Superior (Largura Padrão ~95) - Ajuste se o banner for mais largo
-    echo -e "$azul===============================================================================================${reset}"
+    echo -e "<span class="math-inline">azul\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     # SEU BANNER ASCII ART (Exibido durante a instalação):
-    echo -e "${branco}                        ██╗  ██╗██╗████████╗    ██╗   ██╗██████╗ ███████╗                      ${reset}"
-    echo -e "${branco}                        ██║ ██╔╝██║╚══██╔══╝    ██║   ██║██╔══██╗██╔════╝                      ${reset}"
-    echo -e "${branco}                        █████╔╝ ██║   ██║       ██║   ██║██████╔╝███████╗                      ${reset}"
-    echo -e "${branco}                        ██╔═██╗ ██║   ██║       ╚██╗ ██╔╝██╔═══╝ ╚════██║                      ${reset}"
-    echo -e "${branco}                        ██║  ██╗██║   ██║        ╚████╔╝ ██║     ███████║                      ${reset}"
-    echo -e "${branco}                        ╚═╝  ╚═╝╚═╝   ╚═╝         ╚═══╝  ╚═╝     ╚══════╝                      ${reset}"
-    echo -e "${branco}                                                                                               ${reset}"
-    echo -e "${branco}███████╗██████╗ ██╗███████╗ ██████╗ ███╗   ██╗     ██████╗  ██████╗ ███╗   ██╗██████╗  ██████╗ ${reset}"
-    echo -e "${branco}██╔════╝██╔══██╗██║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝ ██╔═══██╗████╗  ██║██╔══██╗██╔═══██╗${reset}"
-    echo -e "${branco}█████╗  ██║  ██║██║███████╗██║   ██║██╔██╗ ██║    ██║  ███╗██║   ██║██╔██╗ ██║██║  ██║██║   ██║${reset}"
-    echo -e "${branco}██╔══╝  ██║  ██║██║╚════██║██║   ██║██║╚██╗██║    ██║   ██║██║   ██║██║╚██╗██║██║  ██║██║   ██║${reset}"
-    echo -e "${branco}███████╗██████╔╝██║███████║╚██████╔╝██║ ╚████║    ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝${reset}"
-    echo -e "${branco}╚══════╝╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝ ${reset}"
-    echo -e "${branco}                                                                                               ${reset}"
-    # FIM DO BANNER ASCII ART
-    echo ""
-    # Linha de texto centralizada
-    echo -e "${branco}                          Setup do Japa${reset}"
+    echo -e "${branco}                        ██╗  ██╗██╗████████╗    ██╗   ██╗██████╗ ███████╗                      <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                        ██║ ██╔╝██║╚══██╔══╝    ██║   ██║██╔══██╗██╔════╝                      <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                        █████╔╝ ██║   ██║       ██║   ██║██████╔╝███████╗                      <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                        ██╔═██╗ ██║   ██║       ╚██╗ ██╔╝██╔═══╝ ╚════██║                      <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                        ██║  ██╗██║   ██║        ╚████╔╝ ██║     ███████║                      <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                        ╚═╝  ╚═╝╚═╝   ╚═╝         ╚═══╝  ╚═╝     ╚══════╝                      <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                                                                                               <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}███████╗██████╗ ██╗███████╗ ██████╗ ███╗   ██╗     ██████╗  ██████╗ ███╗   ██╗██████╗  ██████╗ <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}██╔════╝██╔══██╗██║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝ ██╔═══██╗████╗  ██║██╔══██╗██╔═══██╗<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}█████╗  ██║  ██║██║███████╗██║   ██║██╔██╗ ██║    ██║  ███╗██║   ██║██╔██╗ ██║██║  ██║██║   ██║<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}██╔══╝  ██║  ██║██║╚════██║██║   ██║██║╚██╗██║    ██║   ██║██║   ██║██║╚██╗██║██║  ██║██║   ██║<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}███████╗██████╔╝██║███████║╚██████╔╝██║ ╚████║    ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}╚══════╝╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝ <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                                                                                               <span class="math-inline">\{reset\}"
+\# FIM DO BANNER ASCII ART
+echo ""
+\# Linha de texto centralizada
+echo \-e "</span>{branco}                          Setup do Japa${reset}"
     # Separador Inferior (Largura Ajustada para o texto acima, ~60)
-    echo -e "$azul============================================================${reset}"
+    echo -e "<span class="math-inline">azul\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     echo ""
 }
 
@@ -139,42 +148,42 @@ mostrar_menu_ferramentas() {
     clear
     echo ""
     # NOVO ASCII ART BANNER ("MENU FERRAMENTAS V2"):
-    echo -e "${branco}            ███╗   ███╗███████╗███╗   ██╗██╗   ██╗    ██████╗ ███████╗                        ${reset}"
-    echo -e "${branco}            ████╗ ████║██╔════╝████╗  ██║██║   ██║    ██╔══██╗██╔════╝                        ${reset}"
-    echo -e "${branco}            ██╔████╔██║█████╗  ██╔██╗ ██║██║   ██║    ██║  ██║█████╗                          ${reset}"
-    echo -e "${branco}            ██║╚██╔╝██║██╔══╝  ██║╚██╗██║██║   ██║    ██║  ██║██╔══╝                          ${reset}"
-    echo -e "${branco}            ██║ ╚═╝ ██║███████╗██║ ╚████║╚██████╔╝    ██████╔╝███████╗                        ${reset}"
-    echo -e "${branco}            ╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝     ╚═════╝ ╚══════╝                        ${reset}"
-    echo -e "${branco}                                                                                              ${reset}"
-    echo -e "${branco}███████╗███████╗██████╗ ██████╗  █████╗ ███╗   ███╗███████╗███╗   ██╗████████╗ █████╗ ███████╗${reset}"
-    echo -e "${branco}██╔════╝██╔════╝██╔══██╗██╔══██╗██╔══██╗████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔══██╗██╔════╝${reset}"
-    echo -e "${branco}█████╗  █████╗  ██████╔╝██████╔╝███████║██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ███████║███████╗${reset}"
-    echo -e "${branco}██╔══╝  ██╔══╝  ██╔══██╗██╔══██╗██╔══██║██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██║╚════██║${reset}"
-    echo -e "${branco}██║     ███████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ██║  ██║███████║${reset}"
-    echo -e "${branco}╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝╚══════╝${reset}"
-    echo -e "${branco}                                                                                              ${reset}"
-    # FIM DO NOVO BANNER
-    echo ""
-    echo -e "${branco}                                         Versão do Setup: ${verde}1.0.0${reset}" # Exemplo
+    echo -e "${branco}            ███╗   ███╗███████╗███╗   ██╗██╗   ██╗    ██████╗ ███████╗                        <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}            ████╗ ████║██╔════╝████╗  ██║██║   ██║    ██╔══██╗██╔════╝                        <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}            ██╔████╔██║█████╗  ██╔██╗ ██║██║   ██║    ██║  ██║█████╗                          <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}            ██║╚██╔╝██║██╔══╝  ██║╚██╗██║██║   ██║    ██║  ██║██╔══╝                          <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}            ██║ ╚═╝ ██║███████╗██║ ╚████║╚██████╔╝    ██████╔╝███████╗                        <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}            ╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝     ╚═════╝ ╚══════╝                        <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                                                                                              <span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}███████╗███████╗██████╗ ██████╗  █████╗ ███╗   ███╗███████╗███╗   ██╗████████╗ █████╗ ███████╗<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}██╔════╝██╔════╝██╔══██╗██╔══██╗██╔══██╗████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔══██╗██╔════╝<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}█████╗  █████╗  ██████╔╝██████╔╝███████║██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ███████║███████╗<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}██╔══╝  ██╔══╝  ██╔══██╗██╔══██╗██╔══██║██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██║╚════██║<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}██║     ███████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ██║  ██║███████║<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝╚══════╝<span class="math-inline">\{reset\}"
+echo \-e "</span>{branco}                                                                                              <span class="math-inline">\{reset\}"
+\# FIM DO NOVO BANNER
+echo ""
+echo \-e "</span>{branco}                                         Versão do Setup: <span class="math-inline">\{verde\}1\.0\.0</span>{reset}" # Exemplo
     # Separador Superior do Menu (Largura ~95)
-    echo -e "${amarelo}===============================================================================================${reset}"
+    echo -e "<span class="math-inline">\{amarelo\}\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     echo ""
     # Opções do Menu - Lista Inicial (Cores Ativo/Inativo)
-    echo -e " ${verde}[ 01 ] Traefik & Portainer${reset}"           # <<< VERDE (Ativo)
-    echo -e " ${vermelho}[ 02 ] Chatwoot${reset}"
-    echo -e " ${vermelho}[ 03 ] Evolution API${reset}"
-    echo -e " ${vermelho}[ 04 ] MinIO${reset}"
-    echo -e " ${vermelho}[ 05 ] Typebot${reset}"
-    echo -e " ${vermelho}[ 06 ] N8N${reset}"
-    echo -e " ${vermelho}[ 07 ] Flowise${reset}"
-    echo -e " ${vermelho}[ 08 ] Wordpress${reset}"
-    echo -e " ${vermelho}[ 09 ] Chatwoot Nestor${reset}"
+    echo -e " <span class="math-inline">\{verde\}\[ 01 \] Traefik & Portainer</span>{reset}"           # <<< VERDE (Ativo)
+    echo -e " <span class="math-inline">\{vermelho\}\[ 02 \] Chatwoot</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 03 \] Evolution API</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 04 \] MinIO</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 05 \] Typebot</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 06 \] N8N</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 07 \] Flowise</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 08 \] Wordpress</span>{reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 09 \] Chatwoot Nestor</span>{reset}"
     # Adicione mais ferramentas aqui conforme for implementando (lembre de mudar a cor para verde)
     echo ""
-    echo -e " ${vermelho}[ 99 ] Sair${reset}"
+    echo -e " <span class="math-inline">\{vermelho\}\[ 99 \] Sair</span>{reset}"
     echo ""
     # Separador Inferior do Menu (Largura ~95)
-    echo -e "${amarelo}===============================================================================================${reset}"
+    echo -e "<span class="math-inline">\{amarelo\}\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     echo ""
 }
 
@@ -183,337 +192,15 @@ mostrar_menu_ferramentas() {
 #------------------------------------------------------------------------------
 
 install_traefik_portainer() {
-    echo -e "${verde}-----------------------------------------------------------------------${reset}"
-    echo -e "${verde} Iniciando Instalação: Traefik & Portainer${reset}"
-    echo -e "${verde}-----------------------------------------------------------------------${reset}"
+    echo -e "<span class="math-inline">\{verde\}\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-</span>{reset}"
+    echo -e "<span class="math-inline">\{verde\} Iniciando Instalação\: Traefik & Portainer</span>{reset}"
+    echo -e "<span class="math-inline">\{verde\}\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-</span>{reset}"
     sleep 1
 
     # --- Variáveis ---
+    # Diretório de instalação no VPS
     local INSTALL_DIR="/opt/setup-edisongondo/traefik"
-    local GITHUB_RAW_URL="https://raw.githubusercontent.com/Japynha/Setup_EdisonGondo/main/traefik" # *** CONFIRME BRANCH 'main' ***
+    # URL base para buscar arquivos no SEU GitHub - *** CONFIRME SE 'main' É SUA BRANCH PADRÃO ***
+    local GITHUB_RAW_URL="https://raw.githubusercontent.com/Japynha/Setup_EdisonGondo/main/traefik"
 
-    # --- 1. Criar Diretórios ---
-    echo -e "${branco}=> Criando diretórios em ${INSTALL_DIR}...${reset}"
-    sudo mkdir -p "${INSTALL_DIR}/data/logs"
-    if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao criar diretório de logs. Abortando.${reset}"; return 1; fi
-    sudo mkdir -p "${INSTALL_DIR}/data/certs"
-    if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao criar diretório de certificados. Abortando.${reset}"; return 1; fi
-    echo -e "${verde}   Diretórios criados.${reset}"
-    sleep 1
-
-    # --- 2. Criar Rede Docker ---
-    echo -e "${branco}=> Verificando/Criando rede Docker [traefik_proxy]...${reset}"
-    if ! sudo docker network inspect traefik_proxy > /dev/null 2>&1; then # Adicionado sudo aqui também
-        echo -e "${amarelo}   Rede não encontrada. Criando...${reset}"
-        if sudo docker network create traefik_proxy > /dev/null; then
-            echo -e "${verde}   Rede [traefik_proxy] criada.${reset}"
-        else
-            echo -e "${vermelho}   ERRO: Falha ao criar rede Docker [traefik_proxy]. Abortando.${reset}"
-            return 1
-        fi
-    else
-        echo -e "${verde}   Rede [traefik_proxy] já existe.${reset}"
-    fi
-    sleep 1
-
-    # --- 3. Baixar Arquivos de Configuração do SEU GitHub ---
-    echo -e "${branco}=> Baixando arquivos de configuração de ${GITHUB_RAW_URL}...${reset}"
-    sudo rm -f "${INSTALL_DIR}/docker-compose.yml" "${INSTALL_DIR}/data/traefik.yml" # Limpa arquivos antigos
-
-    sudo curl -sSL "${GITHUB_RAW_URL}/docker-compose.yml" -o "${INSTALL_DIR}/docker-compose.yml"
-    if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/docker-compose.yml" ]; then echo -e "${vermelho}   ERRO: Falha ao baixar ou arquivo vazio: docker-compose.yml. Verifique a URL e o arquivo no GitHub. Abortando.${reset}"; return 1; fi
-
-    sudo curl -sSL "${GITHUB_RAW_URL}/traefik.yml" -o "${INSTALL_DIR}/data/traefik.yml"
-    if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/data/traefik.yml" ]; then echo -e "${vermelho}   ERRO: Falha ao baixar ou arquivo vazio: traefik.yml. Verifique a URL e o arquivo no GitHub. Abortando.${reset}"; return 1; fi
-    echo -e "${verde}   Arquivos baixados com sucesso.${reset}"
-    sleep 1
-
-    # --- 4. Obter Informações do Usuário (VERSÃO CORRIGIDA) ---
-    echo -e "${branco}=> Coletando informações para o arquivo .env...${reset}"
-    local DOMAINNAME=""
-    local CLOUDFLARE_EMAIL=""
-    local CLOUDFLARE_DNS_API_TOKEN=""
-    local TIMEZONE="America/Sao_Paulo"
-    local PUID="1000"
-    local PGID="1000"
-
-    # Loop para garantir que o domínio não seja vazio
-    while [[ -z "$DOMAINNAME" ]]; do
-        read -p "   - Digite seu domínio principal (ex: seusite.com): " DOMAINNAME
-        if [[ -z "$DOMAINNAME" ]]; then
-             echo -e "${vermelho}     O domínio não pode ser vazio!${reset}"
-        fi
-    done
-    # Loop para garantir que o email não seja vazio
-    while [[ -z "$CLOUDFLARE_EMAIL" ]]; do
-        read -p "   - Digite seu email da conta Cloudflare: " CLOUDFLARE_EMAIL
-         if [[ -z "$CLOUDFLARE_EMAIL" ]]; then
-             echo -e "${vermelho}     O email não pode ser vazio!${reset}"
-        fi
-    done
-    # Loop para garantir que o token não seja vazio
-    while [[ -z "$CLOUDFLARE_DNS_API_TOKEN" ]]; do
-        read -p "   - Digite seu Token de API Cloudflare (Permissão: Edit Zone DNS): " CLOUDFLARE_DNS_API_TOKEN
-         if [[ -z "$CLOUDFLARE_DNS_API_TOKEN" ]]; then
-             echo -e "${vermelho}     O Token API não pode ser vazio!${reset}"
-        fi
-    done
-    # Leitura do Fuso Horário
-    read -p "   - Fuso Horário [Padrão: ${TIMEZONE}]: " user_timezone
-    TIMEZONE=${user_timezone:-$TIMEZONE}
-
-    # read -p "   - PUID [Padrão: ${PUID}]: " user_puid; PUID=${user_puid:-$PUID} # Opcional
-    # read -p "   - PGID [Padrão: ${PGID}]: " user_pgid; PGID=${user_pgid:-$PGID} # Opcional
-
-    echo -e "${verde}   Informações coletadas.${reset}"
-    sleep 1
-
-    # --- 5. Criar Arquivo .env REAL ---
-    echo -e "${branco}=> Criando arquivo .env em ${INSTALL_DIR}...${reset}"
-    sudo rm -f "${INSTALL_DIR}/.env" # Remove o .env antigo se existir
-    # Usando tee com sudo para escrever o arquivo como root
-    sudo tee "${INSTALL_DIR}/.env" > /dev/null << EOF
-# Arquivo gerado pelo script de setup
-DOMAINNAME=${DOMAINNAME}
-CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL}
-CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
-TIMEZONE=${TIMEZONE}
-PUID=${PUID}
-PGID=${PGID}
-EOF
-    if [ $? -eq 0 ] && [ -f "${INSTALL_DIR}/.env" ]; then
-        echo -e "${verde}   Arquivo .env criado com sucesso.${reset}"
-    else
-        echo -e "${vermelho}   ERRO: Falha ao criar arquivo .env. Abortando.${reset}"
-        return 1
-    fi
-    sleep 1
-
-    # --- 6. Criar acme.json ---
-    echo -e "${branco}=> Criando e configurando ${INSTALL_DIR}/data/certs/acme.json...${reset}"
-    sudo touch "${INSTALL_DIR}/data/certs/acme.json"
-    sudo chmod 600 "${INSTALL_DIR}/data/certs/acme.json"
-    if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao criar ou definir permissões para acme.json. Abortando.${reset}"; return 1; fi
-    echo -e "${verde}   Arquivo acme.json pronto.${reset}"
-    sleep 1
-
-    # --- 7. Iniciar os Containers ---
-    echo -e "${branco}=> Executando 'docker compose up -d' em ${INSTALL_DIR}... (Isso pode levar um tempo)${reset}"
-    cd "${INSTALL_DIR}" || { echo -e "${vermelho}ERRO: Não foi possível acessar o diretório ${INSTALL_DIR}. Abortando.${reset}"; return 1; }
-    # Verifica qual comando docker compose usar (v2 ou v1)
-    local DOCKER_COMPOSE_CMD=""
-    if command -v docker &> /dev/null && command -v docker compose &> /dev/null; then
-        DOCKER_COMPOSE_CMD="docker compose"
-    elif command -v docker-compose &> /dev/null; then
-        DOCKER_COMPOSE_CMD="docker-compose"
-    else
-        echo -e "${vermelho}ERRO CRÍTICO: Comando docker compose não encontrado nesta função. Abortando.${reset}"
-        return 1
-    fi
-
-    sudo ${DOCKER_COMPOSE_CMD} up -d
-    DOCKER_COMPOSE_STATUS=$?
-    echo ""
-
-    if [ $DOCKER_COMPOSE_STATUS -eq 0 ]; then
-        echo -e "${verde}   Comando '${DOCKER_COMPOSE_CMD} up -d' executado. Aguardando inicialização...${reset}"
-        sleep 15 # Espera um pouco mais
-
-        # --- 8. Verificar e Mostrar Feedback ---
-        echo ""
-        echo -e "${branco}=> Verificando status dos containers...${reset}"
-        local traefik_ok=false
-        local portainer_ok=false
-        # Verifica usando o nome do container definido no docker-compose.yml
-        if sudo docker ps --filter name=traefik_proxy --format '{{.Names}}' | grep -q 'traefik_proxy'; then echo -e "${verde}   [ OK ] Container Traefik (traefik_proxy) está rodando.${reset}"; traefik_ok=true; else echo -e "${vermelho}   [ OFF ] Container Traefik (traefik_proxy) NÃO está rodando.${reset}"; echo -e "${amarelo}          Verifique os logs com: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} logs traefik${reset}"; fi
-        if sudo docker ps --filter name=portainer_manager --format '{{.Names}}' | grep -q 'portainer_manager'; then echo -e "${verde}   [ OK ] Container Portainer (portainer_manager) está rodando.${reset}"; portainer_ok=true; else echo -e "${vermelho}   [ OFF ] Container Portainer (portainer_manager) NÃO está rodando.${reset}"; echo -e "${amarelo}          Verifique os logs com: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} logs portainer${reset}"; fi
-
-        echo ""
-        echo -e "${verde}-----------------------------------------------------------------------${reset}"
-        if $traefik_ok && $portainer_ok; then
-            echo -e "${verde} Instalação de Traefik & Portainer CONCLUÍDA com Sucesso!${reset}"
-            local portainer_subdomain="portainer" # Subdomínios padrão
-            local traefik_subdomain="traefik"
-            echo -e "${branco}   Acesse o Portainer em:  ${verde}https://${portainer_subdomain}.${DOMAINNAME}${reset}"
-            echo -e "${branco}   (Crie o usuário administrador no primeiro acesso ao Portainer)${reset}"
-            echo -e "${branco}   Dashboard Traefik em: ${verde}https://${traefik_subdomain}.${DOMAINNAME}${reset}"
-            echo -e "${branco}   (Acesso ao dashboard depende da config de labels/auth no compose)${reset}"
-            echo -e "${verde}-----------------------------------------------------------------------${reset}"
-            return 0 # Sucesso
-        else
-            echo -e "${vermelho} Instalação de Traefik & Portainer CONCLUÍDA com ERROS.${reset}"
-            echo -e "${vermelho}   Verifique os logs dos containers que falharam.${reset}"
-            echo -e "${vermelho}-----------------------------------------------------------------------${reset}"
-            return 1 # Falha
-        fi
-    else
-        echo -e "${vermelho}   ERRO: Falha ao executar '${DOCKER_COMPOSE_CMD} up -d' (Status: ${DOCKER_COMPOSE_STATUS}).${reset}"
-        echo -e "${amarelo}          Verifique a saída do Docker Compose acima ou os logs no diretório ${INSTALL_DIR}${reset}"
-        echo -e "${vermelho}-----------------------------------------------------------------------${reset}"
-        return 1 # Falha
-    fi
-}
-
-# --- Adicione outras funções de instalação aqui depois ---
-# install_chatwoot() { ... }
-# install_n8n() { ... }
-
-#------------------------------------------------------------------------------
-# FIM DAS FUNÇÕES DE INSTALAÇÃO
-#------------------------------------------------------------------------------
-
-
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Verificações Iniciais e Instalação de Dependências
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
-# --- (Seção de Verificação Inicial) ---
-nome_verificando
-echo -e "${branco}Aguarde enquanto verificamos algumas informações...${reset}"
-sleep 1
-if [ "$(id -u)" -ne 0 ]; then echo -e "${vermelho}ERRO: Execute como root.${reset}"; exit 1; fi
-echo -e "${verde}INFO:${branco} Verificação de usuário root [ OK ]${reset}"; sleep 1
-if [ -f /etc/os-release ]; then . /etc/os-release; if [[ "$ID" != "ubuntu" && "$ID" != "debian" ]]; then echo -e "${amarelo}AVISO: Testado em Debian/Ubuntu. Você usa $PRETTY_NAME.${reset}"; sleep 3; else echo -e "${verde}INFO:${branco} Verificação OS ($PRETTY_NAME) [ OK ]${reset}"; sleep 1; fi; else echo -e "${amarelo}AVISO: Distro não verificada.${reset}"; sleep 2; fi
-
-# --- (Seção de Instalação de Dependências - COM INSTALAÇÃO AUTOMÁTICA DE DOCKER/COMPOSE) ---
-nome_instalando
-TOTAL_STEPS=11 # Manter 11 por enquanto, docker/compose são pré-requisitos
-CURRENT_STEP=0
-update_step() { CURRENT_STEP=$((CURRENT_STEP + 1)); }
-check_status() { local step_description=$1; update_step; if [ $? -eq 0 ]; then echo -e "${verde}${CURRENT_STEP}/${TOTAL_STEPS} - [ OK ] - ${step_description}${reset}"; else echo -e "${vermelho}${CURRENT_STEP}/${TOTAL_STEPS} - [ OFF ] - ${step_description}${reset}"; fi; echo ""; sleep 0.5; }
-echo -e "${branco}Iniciando atualização e instalação de dependências...${reset}"; echo ""
-apt update -y > /dev/null 2>&1; check_status "Fazendo Update Inicial"
-apt upgrade -y > /dev/null 2>&1; check_status "Fazendo Upgrade Inicial"
-apt install -y sudo > /dev/null 2>&1; check_status "Verificando/Instalando sudo"
-apt install -y apt-utils > /dev/null 2>&1; check_status "Verificando/Instalando apt-utils"
-
-# --- Verificação e Instalação Automática de Docker ---
-echo -e "${branco}=> Verificando Docker...${reset}"
-if ! command -v docker &> /dev/null; then
-    install_docker # Chama a função para instalar
-    if [ $? -ne 0 ]; then echo -e "${vermelho}ERRO FATAL: Falha na instalação automática do Docker. Abortando.${reset}"; exit 1; fi
-    if ! command -v docker &> /dev/null; then echo -e "${vermelho}ERRO FATAL: Docker ainda não encontrado após tentativa de instalação. Abortando.${reset}"; exit 1; fi
-else
-    echo -e "${verde}   Docker já está instalado.${reset}"
-fi
-sleep 1
-
-# --- Verificação e Instalação Automática de Docker Compose ---
-echo -e "${branco}=> Verificando Docker Compose...${reset}"
-if ! command -v docker compose &> /dev/null && ! command -v docker-compose &> /dev/null; then
-    install_docker_compose # Chama a função para instalar
-    if [ $? -ne 0 ]; then echo -e "${vermelho}ERRO FATAL: Falha na instalação automática do Docker Compose. Abortando.${reset}"; exit 1; fi
-    if ! command -v docker compose &> /dev/null && ! command -v docker-compose &> /dev/null; then echo -e "${vermelho}ERRO FATAL: Docker Compose ainda não encontrado após tentativa de instalação. Abortando.${reset}"; exit 1; fi
-else
-    echo -e "${verde}   Docker Compose (V1 ou V2) já está instalado.${reset}"
-fi
-sleep 1
-
-# --- Continua com as outras dependências ---
-apt install -y dialog > /dev/null 2>&1; check_status "Verificando/Instalando dialog"
-apt install -y jq > /dev/null 2>&1; check_status "Verificando/Instalando jq"
-apt install -y apache2-utils > /dev/null 2>&1; check_status "Verificando/Instalando apache2-utils" # Para gerar senhas basic auth se necessário
-apt install -y git > /dev/null 2>&1; check_status "Verificando/Instalando Git"
-apt install -y python3 > /dev/null 2>&1; check_status "Verificando/Instalando python3"
-apt install -y neofetch > /dev/null 2>&1; check_status "Verificando/Instalando neofetch"
-apt update -y > /dev/null 2>&1; check_status "Fazendo Update Final (pré-menu)"
-echo -e "${verde}Verificação e instalação de dependências concluídas.${reset}"; sleep 2
-
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Termos e Menu Principal
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
-# Exibir termos (Caixa ajustada)
-echo -e "${azul}===============================================================================================${reset}"
-echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}"
-echo -e "${azul}= ${branco} Este auto instalador foi desenvolvido para auxiliar na instalação de algumas ferramentas.             ${azul} =${reset}"
-echo -e "${azul}= ${branco} Use com responsabilidade e esteja ciente dos riscos de executar scripts como root.              ${azul} =${reset}"
-echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}"
-echo -e "${azul}===============================================================================================${reset}"
-echo ""
-
-# Aceite dos Termos (Mantida a lógica original do seu script)
-# Se quiser o loop while que sugeri antes para mais robustez, substitua este bloco.
-read -p "Ao digitar Y você concorda com as orientações acima (Y/N): " aceitar_termos
-if [[ "$aceitar_termos" != "Y" && "$aceitar_termos" != "y" ]]; then
-    echo -e "${vermelho}Você não aceitou os termos. Saindo...${reset}"
-    exit 1
-fi
-echo ""
-
-# ----- LOOP PRINCIPAL DO MENU (ADICIONADO) -----
-while true; do
-    # Chama a função para mostrar o menu de ferramentas completo
-    mostrar_menu_ferramentas
-
-    # Leitura da opção do novo menu
-    if [ -t 0 ]; then
-        read -p "Digite o número da opção desejada: " opcao_ferramenta
-    else
-        if [ -e /dev/tty ]; then
-            read -p "Digite o número da opção desejada: " opcao_ferramenta < /dev/tty
-        else
-            echo -e "${vermelho}ERRO: Não é possível ler a entrada. Execute o script em um terminal interativo.${reset}"
-            exit 1 # Sai se não conseguir ler a opção
-        fi
-    fi
-    echo ""
-
-    ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-    ## Processamento da Escolha (Menu de Ferramentas - DENTRO DO LOOP)
-    ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
-    case $opcao_ferramenta in
-        1 | 01 ) # Traefik & Portainer
-            install_traefik_portainer # Chama a função
-            echo -e "${branco}Pressione Enter para voltar ao menu...${reset}"
-            read -r # Espera o usuário pressionar Enter antes de mostrar o menu de novo
-            ;;
-
-        99 ) # Opção para Sair
-            echo -e "${amarelo}Saindo do instalador...${reset}"
-            break # Sai do loop while
-            ;;
-
-        # Opções Inativas (02 a 09)
-        2 | 02 | 3 | 03 | 4 | 04 | 5 | 05 | 6 | 06 | 7 | 07 | 8 | 08 | 9 | 09 )
-            echo -e "${amarelo}AVISO: Opção [ ${opcao_ferramenta} ] ainda não implementada.${reset}"
-            echo -e "${branco}       Pressione Enter para voltar ao menu...${reset}"
-            read -r # Espera o usuário pressionar Enter antes de mostrar o menu de novo
-            ;;
-
-        * ) # Qualquer outra entrada inválida
-            echo -e "${vermelho}Opção inválida! Tente novamente.${reset}"
-            sleep 2 # Pausa para ler a mensagem
-            # O loop continua e mostrará o menu novamente
-            ;;
-    esac
-done
-# ----- FIM DO LOOP PRINCIPAL DO MENU -----
-
-
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Finalização (Só chega aqui se sair do loop com 'break')
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
-echo -e "${verde}Setup principal concluído.${reset}"
-echo -e "${branco}Realizando uma última atualização do sistema...${reset}"
-
-apt update -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo -e "${verde}[ OK ] - Update final.${reset}"
-else
-    echo -e "${vermelho}[ OFF ] - Update final.${reset}"
-fi
-
-apt upgrade -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo -e "${verde}[ OK ] - Upgrade final.${reset}"
-else
-    echo -e "${vermelho}[ OFF ] - Upgrade final.${reset}"
-fi
-
-echo ""
-echo -e "${verde}Processo finalizado!${reset}"
-
-exit 0
+    # --- 1. Cri
