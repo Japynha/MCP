@@ -16,25 +16,27 @@ roxo="\e[35m"
 reset="\e[0m"
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Banners (Adaptados do seu script original)
+## Banners
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
 nome_verificando(){
-    # Banner de Verificação/Aviso Inicial
+    # Banner de Verificação/Aviso Inicial (Largura Ajustada)
     clear
     echo ""
-    echo -e "$amarelo=========================================================================================${reset}"
+    # Ajustado para largura ~70
+    echo -e "$amarelo======================================================================${reset}"
     echo -e "$amarelo= ${branco}Verificando Pré-requisitos...${reset}"
-    echo -e "$amarelo=========================================================================================${reset}"
+    echo -e "$amarelo======================================================================${reset}"
     echo ""
 }
 
 nome_instalando(){
-    # Banner para a fase de instalação (ATUALIZADO)
+    # Banner para a fase de instalação (Larguras Ajustadas)
     clear
     echo ""
-    echo -e "$azul=========================================================================================${reset}"
-    # SEU NOVO BANNER AQUI:
+    # Separador Superior (Largura Padrão ~95)
+    echo -e "$azul===============================================================================================${reset}"
+    # SEU BANNER ASCII ART AQUI:
     echo -e "${branco}                        ██╗  ██╗██╗████████╗    ██╗   ██╗██████╗ ███████╗                      ${reset}"
     echo -e "${branco}                        ██║ ██╔╝██║╚══██╔══╝    ██║   ██║██╔══██╗██╔════╝                      ${reset}"
     echo -e "${branco}                        █████╔╝ ██║   ██║       ██║   ██║██████╔╝███████╗                      ${reset}"
@@ -49,12 +51,12 @@ nome_instalando(){
     echo -e "${branco}███████╗██████╔╝██║███████║╚██████╔╝██║ ╚████║    ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝${reset}"
     echo -e "${branco}╚══════╝╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝ ${reset}"
     echo -e "${branco}                                                                                               ${reset}"
-    # FIM DO NOVO BANNER
+    # FIM DO BANNER ASCII ART
     echo ""
-    # Linha de texto centralizada (mantida)
+    # Linha de texto centralizada
     echo -e "${branco}                          Setup do Japa${reset}"
-    # Linha separadora inferior (mantida)
-    echo -e "$azul=========================================================================================${reset}"
+    # Separador Inferior (Largura Ajustada para o texto acima, ~60)
+    echo -e "$azul============================================================${reset}"
     echo ""
 }
 
@@ -75,7 +77,7 @@ fi
 echo -e "${verde}INFO:${branco} Verificação de usuário root [ OK ]${reset}"
 sleep 1
 
-# 2. Verifica Sistema Operacional (Exemplo - ajuste se necessário)
+# 2. Verifica Sistema Operacional (Exemplo)
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     if [[ "$ID" != "ubuntu" && "$ID" != "debian" ]]; then # Exemplo: Aceita Ubuntu ou Debian
@@ -95,9 +97,9 @@ fi
 ## Instalação de Dependências (com Verificação $?)
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
-nome_instalando
+nome_instalando # Chama o banner com larguras ajustadas
 
-TOTAL_STEPS=11 # Ajuste conforme o número total de passos nesta seção
+TOTAL_STEPS=11 # Verifique se este número ainda está correto
 CURRENT_STEP=0
 
 update_step() {
@@ -107,6 +109,7 @@ update_step() {
 check_status() {
     local step_description=$1
     update_step
+    # Usando $? para verificar o status do último comando (apt)
     if [ $? -eq 0 ]; then
         echo -e "${verde}${CURRENT_STEP}/${TOTAL_STEPS} - [ OK ] - ${step_description}${reset}"
     else
@@ -120,49 +123,19 @@ check_status() {
 echo -e "${branco}Iniciando atualização e instalação de dependências...${reset}"
 echo ""
 
-# 1. Update Inicial
-apt update -y > /dev/null 2>&1
-check_status "Fazendo Update Inicial"
+# Comandos apt e check_status combinados para legibilidade
+apt update -y > /dev/null 2>&1; check_status "Fazendo Update Inicial"
+apt upgrade -y > /dev/null 2>&1; check_status "Fazendo Upgrade Inicial"
+apt install -y sudo > /dev/null 2>&1; check_status "Verificando/Instalando sudo"
+apt install -y apt-utils > /dev/null 2>&1; check_status "Verificando/Instalando apt-utils"
+apt install -y dialog > /dev/null 2>&1; check_status "Verificando/Instalando dialog"
+apt install -y jq > /dev/null 2>&1; check_status "Verificando/Instalando jq"
+apt install -y apache2-utils > /dev/null 2>&1; check_status "Verificando/Instalando apache2-utils"
+apt install -y git > /dev/null 2>&1; check_status "Verificando/Instalando Git"
+apt install -y python3 > /dev/null 2>&1; check_status "Verificando/Instalando python3"
+apt install -y neofetch > /dev/null 2>&1; check_status "Verificando/Instalando neofetch"
+apt update -y > /dev/null 2>&1; check_status "Fazendo Update Final (pré-menu)"
 
-# 2. Upgrade Inicial
-apt upgrade -y > /dev/null 2>&1
-check_status "Fazendo Upgrade Inicial"
-
-# 3. Instalando sudo
-apt install -y sudo > /dev/null 2>&1
-check_status "Verificando/Instalando sudo"
-
-# 4. Instalando apt-utils
-apt install -y apt-utils > /dev/null 2>&1
-check_status "Verificando/Instalando apt-utils"
-
-# 5. Instalando dialog
-apt install -y dialog > /dev/null 2>&1
-check_status "Verificando/Instalando dialog"
-
-# 6. Instalando jq
-apt install -y jq > /dev/null 2>&1
-check_status "Verificando/Instalando jq"
-
-# 7. Instalando apache2-utils
-apt install -y apache2-utils > /dev/null 2>&1
-check_status "Verificando/Instalando apache2-utils"
-
-# 8. Instalando git
-apt install -y git > /dev/null 2>&1
-check_status "Verificando/Instalando Git"
-
-# 9. Instalando python3
-apt install -y python3 > /dev/null 2>&1
-check_status "Verificando/Instalando python3"
-
-# 10. Instalando neofetch
-apt install -y neofetch > /dev/null 2>&1
-check_status "Verificando/Instalando neofetch"
-
-# 11. Update Final (antes do menu/próximo passo)
-apt update -y > /dev/null 2>&1
-check_status "Fazendo Update Final"
 
 echo -e "${verde}Verificação e instalação de dependências concluídas.${reset}"
 sleep 2
@@ -171,16 +144,17 @@ sleep 2
 ## Termos e Menu Principal
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
-# Exibir termos
-echo -e "${azul}===================================================================================================${reset}"
-echo -e "${azul}= ${branco}                                                                                         ${azul} =${reset}"
-echo -e "${azul}= ${branco} Este auto instalador foi desenvolvido para auxiliar na instalação de algumas ferramentas. ${azul} =${reset}"
-echo -e "${azul}= ${branco} Use com responsabilidade e esteja ciente dos riscos de executar scripts como root.     ${azul} =${reset}"
-echo -e "${azul}= ${branco}                                                                                         ${azul} =${reset}"
-echo -e "${azul}===================================================================================================${reset}"
+# Exibir termos (Caixa ajustada para ~95 caracteres de largura, incluindo padding interno)
+echo -e "${azul}===============================================================================================${reset}" # 95 '='
+echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}" # 91 espaços internos
+echo -e "${azul}= ${branco} Este auto instalador foi desenvolvido para auxiliar na instalação de algumas ferramentas.             ${azul} =${reset}" # Texto + 13 espaços
+echo -e "${azul}= ${branco} Use com responsabilidade e esteja ciente dos riscos de executar scripts como root.              ${azul} =${reset}" # Texto + 14 espaços
+echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}" # 91 espaços internos
+echo -e "${azul}===============================================================================================${reset}" # 95 '='
 echo ""
 
-# Aceite dos Termos
+# Aceite dos Termos (Mantida a lógica original do seu script)
+# Se quiser o loop while que sugeri antes para mais robustez, substitua este bloco.
 read -p "Ao digitar Y você concorda com as orientações acima (Y/N): " aceitar_termos
 if [[ "$aceitar_termos" != "Y" && "$aceitar_termos" != "y" ]]; then
     echo -e "${vermelho}Você não aceitou os termos. Saindo...${reset}"
@@ -196,7 +170,7 @@ echo -e "${amarelo}1${reset} - Instalar Evolution API MCP"
 echo -e "${amarelo}2${reset} - Sair"
 echo ""
 
-# Leitura da opção (mantendo a lógica de TTY)
+# Leitura da opção (com indentação corrigida)
 if [ -t 0 ]; then
     read -p "> " opcao
 else
@@ -229,7 +203,8 @@ case $opcao in
 
         # Baixa o script com verificação de erro
         curl -fsSL "$EVOLUTION_SCRIPT_URL" -o "$EVOLUTION_SCRIPT_NAME"
-        if [ $? -eq 0 ]; then
+        CURL_STATUS=$? # Captura status do curl
+        if [ $CURL_STATUS -eq 0 ]; then
             echo -e "${verde}[ OK ] - Download do script $EVOLUTION_SCRIPT_NAME concluído.${reset}"
             echo ""
             chmod +x "$EVOLUTION_SCRIPT_NAME"
@@ -246,7 +221,7 @@ case $opcao in
                 echo -e "${verde}[ OK ] - Script $EVOLUTION_SCRIPT_NAME executado com sucesso.${reset}"
             else
                 echo -e "${vermelho}[ OFF ] - Script $EVOLUTION_SCRIPT_NAME finalizado com erro (Status: $EXEC_STATUS).${reset}"
-                echo -e "${amarelo}       Verifique o log acima para mais detalhes.${reset}"
+                echo -e "${amarelo}       Verifique o log acima para mais detalhes.${reset}" # Indentação corrigida
             fi
 
             # Limpeza
@@ -255,8 +230,8 @@ case $opcao in
             echo ""
 
         else
-            echo -e "${vermelho}[ OFF ] - Erro ao baixar o script $EVOLUTION_SCRIPT_NAME.${reset}"
-            echo -e "${vermelho}        Verifique sua conexão com a internet ou a URL e tente novamente.${reset}"
+            echo -e "${vermelho}[ OFF ] - Erro ao baixar o script $EVOLUTION_SCRIPT_NAME (Status Curl: $CURL_STATUS).${reset}"
+            echo -e "${vermelho}        Verifique sua conexão com a internet ou a URL e tente novamente.${reset}" # Indentação corrigida
             exit 1
         fi
         ;;
