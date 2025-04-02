@@ -32,25 +32,77 @@ echo -e "██╔══╝  ██║  ██║██║╚════█�
 echo -e "███████╗██████╔╝██║███████╗╚██████╔╝██║ ╚████║    ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝"
 echo -e "╚══════╝╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝"
 echo -e ""
-echo -e "                           Setup do Japa"
+echo -e "                 Setup do Japa"
 echo -e ""
 
-# Atualizar e fazer upgrade
-echo -e "${azul}Atualizando listas de pacotes...${reset}"
-sudo apt update
-echo -e "${azul}Fazendo upgrade dos pacotes...${reset}"
+total_steps=14
+contador=1
+
+# 1/14 - [ OK ] Fazendo Upgrade
+echo -e "${azul}${contador}/${total_steps} [ OK ] Fazendo Upgrade${reset}"
+contador=$((contador + 1))
+sudo apt update -y
+
+# 2/14 - [ OK ] Verificando / Instalando sudo
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando sudo${reset}"
+dpkg -s "sudo" >/dev/null 2>&1 || sudo apt install -y "sudo"
+contador=$((contador + 1))
+
+# 3/14 - [ OK ] Verificando / Instalando apt - utils
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando apt - utils${reset}"
+dpkg -s "apt-utils" >/dev/null 2>&1 || sudo apt install -y "apt-utils"
+contador=$((contador + 1))
+
+# 4/14 - [ OK ] Verificando / Instalando dialog
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando dialog${reset}"
+dpkg -s "dialog" >/dev/null 2>&1 || sudo apt install -y "dialog"
+contador=$((contador + 1))
+
+# 5/14 - [ OK ] Verificando / Instalando jq 1/2
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando jq 1/2${reset}"
+dpkg -s "jq" >/dev/null 2>&1 || sudo apt install -y "jq"
+contador=$((contador + 1))
+
+# 6/14 - [ OK ] Verificando / Instalando jq 2/2 (já instalado no passo anterior, mas para manter a ordem)
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando jq 2/2${reset}"
+contador=$((contador + 1))
+
+# 7/14 - [ OK ] Verificando / Instalando apache2 - utils 1/2
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando apache2 - utils 1/2${reset}"
+dpkg -s "apache2-utils" >/dev/null 2>&1 || sudo apt install -y "apache2-utils"
+contador=$((contador + 1))
+
+# 8/14 - [ OK ] Verificando / Instalando apache2 - utils 2/2 (já instalado no passo anterior)
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando apache2 - utils 2/2${reset}"
+contador=$((contador + 1))
+
+# 9/14 - [ OK ] Verificando / Instalando Git
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando Git${reset}"
+dpkg -s "git" >/dev/null 2>&1 || sudo apt install -y "git"
+contador=$((contador + 1))
+
+# 10/14 - [ OK ] Verificando / Instalando python3
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando python3${reset}"
+dpkg -s "python3" >/dev/null 2>&1 || sudo apt install -y "python3"
+contador=$((contador + 1))
+
+# 11/14 - [ OK ] Fazendo Update
+echo -e "${azul}${contador}/${total_steps} [ OK ] Fazendo Update${reset}"
+contador=$((contador + 1))
+sudo apt update -y
+
+# 12/14 - [ OK ] Fazendo Upgrade
+echo -e "${azul}${contador}/${total_steps} [ OK ] Fazendo Upgrade${reset}"
+contador=$((contador + 1))
 sudo apt upgrade -y
 
-# Instalar dependências comuns (seguindo a ordem do Orion Design)
-declare -a dependencias=("sudo" "apt-utils" "dialog" "jq" "apache2-utils" "git" "python3" "neofetch")
-total_dependencias=${#dependencias[@]}
-echo -e "${azul}Verificando/Instalando dependências comuns...${reset}"
-contador=1
-for dependencia in "${dependencias[@]}"; do
-    echo -e "${azul}${contador}/${total_dependencias} [ OK ] Verificando/Instalando ${dependencia}${reset}"
-    dpkg -s "$dependencia" >/dev/null 2>&1 || sudo apt install -y "$dependencia"
-    contador=$((contador + 1))
-done
+# 13/14 - [ OK ] Verificando / Instalando neofetch
+echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando neofetch${reset}"
+dpkg -s "neofetch" >/dev/null 2>&1 || sudo apt install -y "neofetch"
+contador=$((contador + 1))
+
+# 14/14 - [ OK ] Baixando o script (esta etapa será a exibição do seu banner e menu)
+echo -e "${azul}${contador}/${total_steps} [ OK ] Baixando o script${reset}"
 
 echo ""
 echo -e "${amarelo}Aguarde enquanto verificamos algumas informações...${reset}"
@@ -71,6 +123,26 @@ if [[ "$aceitar_termos" != "Y" && "$aceitar_termos" != "y" ]]; then
 fi
 
 echo ""
+
+# Banner
+echo -e "
+                        ██╗  ██╗██╗████████╗    ██╗   ██╗██████╗ ███████╗
+                        ██║ ██╔╝██║╚══██╔══╝    ██║   ██║██╔══██╗██╔════╝
+                        █████╔╝ ██║   ██║       ██║   ██║██████╔╝███████╗
+                        ██╔═██╗ ██║   ██║       ╚██╗ ██╔╝██╔═══╝ ╚════██║
+                        ██║  ██╗██║   ██║        ╚████╔╝ ██║     ███████║
+                        ╚═╝  ╚═╝╚═╝   ╚═╝         ╚═══╝  ╚═╝     ╚══════╝
+"
+echo -e ""
+echo -e "███████╗██████╗ ██╗███████╗ ██████╗ ███╗   ██╗     ██████╗  ██████╗ ███╗   ██╗██████╗  ██████╗"
+echo -e "██╔════╝██╔══██╗██║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝ ██╔═══██╗████╗  ██║██╔══██╗██╔═══██╗"
+echo -e "█████╗  ██║  ██║██║███████╗██║   ██║██╔██╗ ██║    ██║  ███╗██║   ██║██╔██╗ ██║██║  ██║██║   ██║"
+echo -e "██╔══╝  ██║  ██║██║╚════██║██║   ██║██║╚██╗██║    ██║   ██║██║   ██║██║╚██╗██║██║  ██║██║   ██║"
+echo -e "███████╗██████╔╝██║███████╗╚██████╔╝██║ ╚████║    ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝"
+echo -e "╚══════╝╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝"
+echo -e ""
+echo -e "                 Setup do Japa"
+echo -e ""
 
 # 1. Mostra as opções disponíveis
 echo -e "${azul}Opções disponíveis:${reset}"
