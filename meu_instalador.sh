@@ -64,7 +64,7 @@ echo -e "${azul}=   Use com responsabilidade e esteja ciente dos riscos de exe
 echo -e "${azul}===================================================================================================${reset}"
 echo ""
 
-read -p "${amarelo}Ao digitar Y você concorda com as orientações acima (Y/N): ${reset}" aceitar_termos
+read -p "Ao digitar Y você concorda com as orientações acima (Y/N): ${reset}" aceitar_termos
 if [[ "$aceitar_termos" != "Y" && "$aceitar_termos" != "y" ]]; then
     echo -e "${vermelho}Você não aceitou os termos. Saindo...${reset}"
     exit 1
