@@ -88,14 +88,14 @@ mostrar_menu_ferramentas() {
     # Opções do Menu - Lista Inicial (Cores Ativo/Inativo)
     echo -e " ${vermelho}[ 01 ] Traefik & Portainer${reset}"
     echo -e " ${vermelho}[ 02 ] Chatwoot${reset}"
-    echo -e " ${vermelho}[ 03 ] Evolution API${reset}"                # <<< MUDOU PARA VERMELHO (Inativo)
+    echo -e " ${vermelho}[ 03 ] Evolution API${reset}"                # <<< VERMELHO (Inativo)
     echo -e " ${vermelho}[ 04 ] MinIO${reset}"
     echo -e " ${vermelho}[ 05 ] Typebot${reset}"
     echo -e " ${vermelho}[ 06 ] N8N${reset}"
     echo -e " ${vermelho}[ 07 ] Flowise${reset}"
     echo -e " ${vermelho}[ 08 ] Wordpress${reset}"
     echo -e " ${vermelho}[ 09 ] Chatwoot Nestor${reset}"
-    # Adicione mais ferramentas aqui conforme for implementando
+    # Adicione mais ferramentas aqui conforme for implementando (lembre de mudar a cor para verde)
     echo ""
     echo -e " ${vermelho}[ 99 ] Sair${reset}"
     echo ""
@@ -103,6 +103,27 @@ mostrar_menu_ferramentas() {
     echo -e "${amarelo}===============================================================================================${reset}"
     echo ""
 }
+
+#------------------------------------------------------------------------------
+# FUNÇÕES DE INSTALAÇÃO DAS FERRAMENTAS (Começar a adicionar aqui)
+#------------------------------------------------------------------------------
+
+# Exemplo de função vazia para Traefik (a ser preenchida depois)
+install_traefik_portainer() {
+    echo -e "${amarelo}--- Função install_traefik_portainer() CHAMADA ---${reset}"
+    echo -e "${amarelo}   (Lógica de instalação ainda não implementada)${reset}"
+    sleep 3
+    # return 0 # Retornaria 0 em caso de sucesso real
+}
+
+# --- Adicione outras funções de instalação aqui depois ---
+# install_chatwoot() { ... }
+# install_n8n() { ... }
+
+
+#------------------------------------------------------------------------------
+# FIM DAS FUNÇÕES DE INSTALAÇÃO
+#------------------------------------------------------------------------------
 
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
@@ -193,6 +214,7 @@ echo -e "${azul}================================================================
 echo ""
 
 # Aceite dos Termos (Mantida a lógica original do seu script)
+# Se quiser o loop while que sugeri antes para mais robustez, substitua este bloco.
 read -p "Ao digitar Y você concorda com as orientações acima (Y/N): " aceitar_termos
 if [[ "$aceitar_termos" != "Y" && "$aceitar_termos" != "y" ]]; then
     echo -e "${vermelho}Você não aceitou os termos. Saindo...${reset}"
@@ -219,7 +241,7 @@ fi
 echo ""
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Processamento da Escolha (Menu de Ferramentas - Atualizado)
+## Processamento da Escolha (Menu de Ferramentas - ATUALIZADO)
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
 case $opcao_ferramenta in
@@ -229,15 +251,25 @@ case $opcao_ferramenta in
         ;;
 
     # Opções Inativas (01 a 09) - Mostram mensagem "Não implementada"
-    # Incluindo a opção 03 agora
+    # A opção 03 agora está aqui também.
     1 | 01 | 2 | 02 | 3 | 03 | 4 | 04 | 5 | 05 | 6 | 06 | 7 | 07 | 8 | 08 | 9 | 09 )
-        echo -e "${amarelo}AVISO: Opção [ $opcao_ferramenta ] ainda não implementada.${reset}"
-        echo -e "${branco}       Voltando ao menu em 3 segundos...${reset}"
+        # QUANDO IMPLEMENTAR UMA OPÇÃO, EX: TRAEFIK (01):
+        # 1. Mude a cor no menu 'mostrar_menu_ferramentas' para verde.
+        # 2. Crie a função 'install_traefik_portainer()'.
+        # 3. Mova o '1 | 01 )' daqui de baixo para um bloco próprio acima, fazendo ele chamar a função:
+        #
+        # 1 | 01 ) # Traefik & Portainer
+        #    install_traefik_portainer # Chama a função
+        #    echo -e "${branco}Pressione Enter para voltar ao menu...${reset}"; read -r
+        #    ;;
+        #
+        # Por enquanto, todas mostram a mensagem abaixo:
+        echo -e "${amarelo}AVISO: Opção [ ${opcao_ferramenta} ] ainda não implementada.${reset}"
+        echo -e "${branco}       Voltando ao menu em 3 segundos...${reset}" # Esta mensagem pode não ser útil se o script sai depois
         sleep 3
-        # Aqui, em vez de sair, vamos chamar o menu novamente para o usuário tentar outra opção
-        # (Isso requer que o processo principal seja um loop ou que esta seção seja chamada de dentro de um loop)
-        # Por enquanto, apenas exibiremos a mensagem e o script continuará para a finalização.
-        # Para um loop de menu, a estrutura precisaria ser reorganizada.
+        # NOTA: O script atualmente CONTINUA para a seção de Finalização após esta mensagem.
+        # Para um menu que volta a aparecer, seria necessário um loop 'while' em volta
+        # da chamada do menu e do 'case'. Podemos adicionar isso depois.
         ;;
 
     * ) # Qualquer outra entrada inválida
