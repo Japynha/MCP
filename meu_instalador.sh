@@ -70,7 +70,7 @@ case $opcao in
         echo -e "${azul}Iniciando instalação do Evolution API MCP...${reset}"
         echo -e "${amarelo}Baixando script de configuração...${reset}"
 
-        # Baixar o script setup_evolution.sh do repositório do ABCMilioli
+        # Baixar o script setup_evolution.sh do repositório do Japynha
         EVOLUTION_SCRIPT_URL="EVOLUTION_SCRIPT_URL="https://raw.githubusercontent.com/Japynha/MCP/main/install_evolution.sh""
         curl -fsSL "$EVOLUTION_SCRIPT_URL" -o setup_evolution.sh
 
