@@ -32,7 +32,7 @@ echo -e "██╔══╝  ██║  ██║██║╚════█�
 echo -e "███████╗██████╔╝██║███████╗╚██████╔╝██║ ╚████║    ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝"
 echo -e "╚══════╝╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝"
 echo -e ""
-echo -e "         O básico para iniciar com as automações"
+echo -e "                 Setup do Japa"
 echo -e ""
 
 # Atualizar e fazer upgrade
@@ -41,9 +41,16 @@ sudo apt update
 echo -e "${azul}Fazendo upgrade dos pacotes...${reset}"
 sudo apt upgrade -y
 
-# Instalar dependências comuns
-echo -e "${azul}Verificando e instalando dependências comuns...${reset}"
-sudo apt install -y sudo apt-utils dialog jq apache2-utils git python3 neofetch
+# Instalar dependências comuns (seguindo a ordem do Orion Design)
+declare -a dependencias=("sudo" "apt-utils" "dialog" "jq" "apache2-utils" "git" "python3" "neofetch")
+total_dependencias=${#dependencias[@]}
+echo -e "${azul}Verificando/Instalando dependências comuns...${reset}"
+contador=1
+for dependencia in "${dependencias[@]}"; do
+    echo -e "${azul}${contador}/${total_dependencias} [ OK ] Verificando/Instalando ${dependencia}${reset}"
+    dpkg -s "$dependencia" >/dev/null 2>&1 || sudo apt install -y "$dependencia"
+    contador=$((contador + 1))
+done
 
 echo ""
 echo -e "${amarelo}Aguarde enquanto verificamos algumas informações...${reset}"
