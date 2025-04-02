@@ -21,7 +21,7 @@ reset="\e[0m"
 
 install_docker() {
     echo -e "<span class="math-inline">\{amarelo\}   Docker não encontrado\. Tentando instalar\.\.\.</span>{reset}"
-    # Verifica se curl está disponível para baixar o script
+    # Garante que curl está instalado antes de usar
     if ! command -v curl &> /dev/null; then
         echo -e "<span class="math-inline">\{amarelo\}   Comando 'curl' não encontrado\. Tentando instalar curl\.\.\.</span>{reset}"
         sudo apt update -y > /dev/null 2>&1
@@ -37,8 +37,7 @@ install_docker() {
     curl -fsSL https://get.docker.com -o get-docker.sh
     if [ <span class="math-inline">? \-ne 0 \]; then
 echo \-e "</span>{vermelho}   ERRO: Falha ao baixar o script get-docker.sh.<span class="math-inline">\{reset\}"
-\# Tenta remover o arquivo baixado parcialmente, se existir
-rm \-f get\-docker\.sh
+rm \-f get\-docker\.sh \# Limpa arquivo parcial
 return 1
 fi
 echo \-e "</span>{branco}   Executando script de instalação do Docker (pode demorar um pouco)...<span class="math-inline">\{reset\}"
@@ -48,9 +47,11 @@ local install\_status\=</span>?
 
     if [ <span class="math-inline">install\_status \-eq 0 \]; then
 echo \-e "</span>{verde}   Docker instalado com sucesso (aparentemente).<span class="math-inline">\{reset\}"
-\# Ativa e inicia o serviço Docker
+\# Garante que o serviço Docker está ativo e habilitado para iniciar com o sistema
 sudo systemctl enable docker \> /dev/null 2\>&1
 sudo systemctl start docker \> /dev/null 2\>&1
+\# Pequena pausa para garantir que o serviço suba
+sleep 5
 return 0 \# Sucesso
 else
 echo \-e "</span>{vermelho}   ERRO: Falha ao executar o script de instalação do Docker (Status: <span class="math-inline">\{install\_status\}\)\.</span>{reset}"
@@ -61,15 +62,29 @@ echo \-e "</span>{vermelho}   ERRO: Falha ao executar o script de instalação d
 install_docker_compose() {
     echo -e "<span class="math-inline">\{amarelo\}   Docker Compose \(V1 ou V2\) não encontrado\. Tentando instalar V2 \(plugin\)\.\.\.</span>{reset}"
     sudo apt update -y > /dev/null 2>&1
+    # Tenta instalar o plugin (funciona na maioria dos sistemas baseados em Debian/Ubuntu recentes)
     sudo apt install -y docker-compose-plugin
     if command -v docker compose &> /dev/null; then
         echo -e "<span class="math-inline">\{verde\}   Docker Compose V2 \(plugin\) instalado com sucesso\.</span>{reset}"
         return 0 # Sucesso
     else
-        echo -e "<span class="math-inline">\{vermelho\}   ERRO\: Falha ao instalar Docker Compose V2 \(plugin\)\.</span>{reset}"
-        echo -e "<span class="math-inline">\{amarelo\}   Verifique se o Docker foi instalado corretamente ou tente instalar o Docker Compose manualmente\.</span>{reset}"
-        # Não vamos tentar instalar V1 automaticamente para evitar mais complexidade
-        return 1 # Falha
+        # Se V2 falhou, tenta instalar V1 como fallback (comum em sistemas mais antigos)
+        echo -e "<span class="math-inline">\{amarelo\}   Falha ao instalar V2 \(plugin\)\. Tentando instalar V1 \(standalone\)\.\.\.</span>{reset}"
+        local compose_version="1.29.2" # Use uma versão V1 estável conhecida
+        sudo curl -L "https://github.com/docker/compose/releases/download/<span class="math-inline">\{<1\>compose\_version\}/docker\-compose\-</span>(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        if [ <span class="math-inline">? \-eq 0 \]; then
+sudo chmod \+x /usr/local/bin/docker\-compose</1\>
+if command \-v docker\-compose &\> /dev/null; then
+echo \-e "</span>{verde}   Docker Compose V1 (standalone <span class="math-inline">\{compose\_version\}\) instalado com sucesso\.</span>{reset}"
+                 return 0 # Sucesso com V1
+            else
+                 echo -e "<span class="math-inline">\{vermelho\}   ERRO\: Falha ao tornar docker\-compose V1 executável ou encontrá\-lo após download\.</span>{reset}"
+                 return 1 # Falha
+            fi
+        else
+             echo -e "<span class="math-inline">\{vermelho\}   ERRO\: Falha ao baixar Docker Compose V1 \(</span>{compose_version}).${reset}"
+             return 1 # Falha
+        fi
     fi
 }
 
@@ -95,7 +110,7 @@ nome_instalando(){
     # Separador Superior (Largura Padrão ~95) - Ajuste se o banner for mais largo
     echo -e "<span class="math-inline">azul\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     # SEU BANNER ASCII ART (Exibido durante a instalação):
-    echo -e "${branco}                        ██╗  ██╗██╗████████╗    ██╗   ██╗██████╗ ███████╗                      <span class="math-inline">\{reset\}"
+    echo -e "${branco}                           ██╗  ██╗██╗████████╗    ██╗   ██╗██████╗ ███████╗                      <span class="math-inline">\{reset\}"
 echo \-e "</span>{branco}                        ██║ ██╔╝██║╚══██╔══╝    ██║   ██║██╔══██╗██╔════╝                      <span class="math-inline">\{reset\}"
 echo \-e "</span>{branco}                        █████╔╝ ██║   ██║       ██║   ██║██████╔╝███████╗                      <span class="math-inline">\{reset\}"
 echo \-e "</span>{branco}                        ██╔═██╗ ██║   ██║       ╚██╗ ██╔╝██╔═══╝ ╚════██║                      <span class="math-inline">\{reset\}"
@@ -123,7 +138,7 @@ mostrar_menu_ferramentas() {
     clear
     echo ""
     # NOVO ASCII ART BANNER ("MENU FERRAMENTAS V2"):
-    echo -e "${branco}            ███╗   ███╗███████╗███╗   ██╗██╗   ██╗    ██████╗ ███████╗                        <span class="math-inline">\{reset\}"
+    echo -e "${branco}               ███╗   ███╗███████╗███╗   ██╗██╗   ██╗    ██████╗ ███████╗                        <span class="math-inline">\{reset\}"
 echo \-e "</span>{branco}            ████╗ ████║██╔════╝████╗  ██║██║   ██║    ██╔══██╗██╔════╝                        <span class="math-inline">\{reset\}"
 echo \-e "</span>{branco}            ██╔████╔██║█████╗  ██╔██╗ ██║██║   ██║    ██║  ██║█████╗                          <span class="math-inline">\{reset\}"
 echo \-e "</span>{branco}            ██║╚██╔╝██║██╔══╝  ██║╚██╗██║██║   ██║    ██║  ██║██╔══╝                          <span class="math-inline">\{reset\}"
@@ -144,7 +159,7 @@ echo \-e "</span>{branco}                                         Versão do Set
     echo -e "<span class="math-inline">\{amarelo\}\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=</span>{reset}"
     echo ""
     # Opções do Menu - Lista Inicial (Cores Ativo/Inativo)
-    echo -e " <span class="math-inline">\{verde\}\[ 01 \] Traefik & Portainer</span>{reset}"           # <<< MUDOU PARA VERDE (Ativo)
+    echo -e " <span class="math-inline">\{verde\}\[ 01 \] Traefik & Portainer</span>{reset}"           # <<< VERDE (Ativo)
     echo -e " <span class="math-inline">\{vermelho\}\[ 02 \] Chatwoot</span>{reset}"
     echo -e " <span class="math-inline">\{vermelho\}\[ 03 \] Evolution API</span>{reset}"
     echo -e " <span class="math-inline">\{vermelho\}\[ 04 \] MinIO</span>{reset}"
@@ -282,6 +297,7 @@ echo \-e "</span>{verde}   Comando '<span class="math-inline">\{DOCKER\_COMPOSE\
         echo -e "<span class="math-inline">\{branco\}\=\> Verificando status dos containers\.\.\.</span>{reset}"
         local traefik_ok=false
         local portainer_ok=false
+        # Verifica usando o nome do container definido no docker-compose.yml
         if sudo docker ps --filter name=traefik_proxy --format '{{.Names}}' | grep -q 'traefik_proxy'; then echo -e "<span class="math-inline">\{verde\}   \[ OK \] Container Traefik \(traefik\_proxy\) está rodando\.</span>{reset}"; traefik_ok=true; else echo -e "<span class="math-inline">\{vermelho\}   \[ OFF \] Container Traefik \(traefik\_proxy\) NÃO está rodando\.</span>{reset}"; echo -e "${amarelo}          Verifique os logs com: cd ${INSTALL_DIR} && sudo <span class="math-inline">\{DOCKER\_COMPOSE\_CMD\} logs traefik</span>{reset}"; fi
         if sudo docker ps --filter name=portainer_manager --format '{{.Names}}' | grep -q 'portainer_manager'; then echo -e "<span class="math-inline">\{verde\}   \[ OK \] Container Portainer \(portainer\_manager\) está rodando\.</span>{reset}"; portainer_ok=true; else echo -e "<span class="math-inline">\{vermelho\}   \[ OFF \] Container Portainer \(portainer\_manager\) NÃO está rodando\.</span>{reset}"; echo -e "${amarelo}          Verifique os logs com: cd ${INSTALL_DIR} && sudo <span class="math-inline">\{DOCKER\_COMPOSE\_CMD\} logs portainer</span>{reset}"; fi
 
@@ -441,5 +457,26 @@ done
 
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Finalização (Só chega aqui se sair do loop com 'break' ou 'exit')
-## // ## // ## // ## // ## //
+## Finalização (Só chega aqui se sair do loop com 'break')
+## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+
+echo -e "<span class="math-inline">\{verde\}Setup principal concluído\.</span>{reset}"
+echo -e "<span class="math-inline">\{branco\}Realizando uma última atualização do sistema\.\.\.</span>{reset}"
+
+apt update -y > /dev/null 2>&1
+if [ <span class="math-inline">? \-eq 0 \]; then
+echo \-e "</span>{verde}[ OK ] - Update final.<span class="math-inline">\{reset\}"
+else
+echo \-e "</span>{vermelho}[ OFF ] - Update final.${reset}"
+fi
+
+apt upgrade -y > /dev/null 2>&1
+if [ <span class="math-inline">? \-eq 0 \]; then
+echo \-e "</span>{verde}[ OK ] - Upgrade final.<span class="math-inline">\{reset\}"
+else
+echo \-e "</span>{vermelho}[ OFF ] - Upgrade final.<span class="math-inline">\{reset\}"
+fi
+echo ""
+echo \-e "</span>{verde}Processo finalizado!${reset}"
+
+exit 0
