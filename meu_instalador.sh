@@ -1,16 +1,11 @@
 #!/bin/bash
 
-# Verificar se está rodando como root
-if [ "$EUID" -ne 0 ]; then
-    echo -e "\e[31mEste script precisa ser executado como root\e[0m"
-    echo -e "\e[33mUse: sudo bash meu_instalador.sh\e[0m"
-    exit 1
-fi
-
 # Cores para output
-verde="\e[32m"
-vermelho="\e[31m"
 amarelo="\e[33m"
+verde="\e[32m"
+branco="\e[97m"
+bege="\e[93m"
+vermelho="\e[91m"
 azul="\e[34m"
 roxo="\e[35m"
 reset="\e[0m"
@@ -35,74 +30,60 @@ echo -e ""
 echo -e "                 Setup do Japa"
 echo -e ""
 
-total_steps=14
-contador=1
+nome_verificando(){
+    clear
+    echo ""
+    echo -e "$amarelo=========================================================================================>"
+    echo -e "$amarelo=                                                                                        >"
+    echo -e "$amarelo=       $branco ██╗   ██╗███████╗██████╗ ██╗███████╗██╗ ██████╗ █████╗ ███╗   ██╗██████╗ >"
+    echo -e "$amarelo=       $branco ██║   ██║██╔════╝██╔══██╗██║██╔════╝██║██╔════╝██╔══██╗████╗  ██║██╔══██╗>"
+    echo -e "$amarelo=       $branco ██║   ██║█████╗  ██████╔╝██║█████╗  ██║██║     ███████║██╔██╗ ██║██║  ██║>"
+    echo -e "$amarelo=       $branco ╚██╗ ██╔╝██╔══╝  ██╔══██╗██║██╔══╝  ██║██║     ██╔══██║██║╚██╗██║██║  ██║>"
+    echo -e "$amarelo=       $branco  ╚████╔╝ ███████╗██║  ██║██║██║     ██║╚██████╗██║  ██║██║ ╚████║██████╔╝>"
+    echo -e "$amarelo=       $branco   ╚═══╝  ╚══════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ >"
+    echo -e "$amarelo=                                                                                        >"
+    echo -e "$amarelo=========================================================================================>"
+    echo ""
+    echo ""
+}
 
-# 1/14 - [ OK ] Fazendo Upgrade
-echo -e "${azul}${contador}/${total_steps} [ OK ] Fazendo Upgrade${reset}"
-contador=$((contador + 1))
-sudo apt update -y
+nome_verificando
+echo "Aguarde enquanto verificamos algumas informações."
+sleep 1
 
-# 2/14 - [ OK ] Verificando / Instalando sudo
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando sudo${reset}"
-dpkg -s "sudo" >/dev/null 2>&1 || sudo apt install -y "sudo"
-contador=$((contador + 1))
+# Atualizar e fazer upgrade
+echo -e "${azul}1/14 [ OK ] Fazendo Upgrade${reset}"
+sudo apt update -y > /dev/null 2>&1
+echo -e "${azul}2/14 [ OK ] Fazendo Upgrade${reset}"
+sudo apt upgrade -y > /dev/null 2>&1
 
-# 3/14 - [ OK ] Verificando / Instalando apt - utils
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando apt - utils${reset}"
-dpkg -s "apt-utils" >/dev/null 2>&1 || sudo apt install -y "apt-utils"
-contador=$((contador + 1))
+# Instalar dependências comuns
+echo -e "${azul}3/14 [ OK ] Verificando / Instalando sudo${reset}"
+sudo apt install -y sudo > /dev/null 2>&1
+echo -e "${azul}4/14 [ OK ] Verificando / Instalando apt - utils${reset}"
+sudo apt install -y apt-utils > /dev/null 2>&1
+echo -e "${azul}5/14 [ OK ] Verificando / Instalando dialog${reset}"
+sudo apt install -y dialog > /dev/null 2>&1
+echo -e "${azul}6/14 [ OK ] Verificando / Instalando jq 1/2${reset}"
+sudo apt install -y jq > /dev/null 2>&1
+echo -e "${azul}7/14 [ OK ] Verificando / Instalando jq 2/2${reset}"
+sudo apt install -y jq > /dev/null 2>&1
+echo -e "${azul}8/14 [ OK ] Verificando / Instalando apache2 - utils 1/2${reset}"
+sudo apt install -y apache2-utils > /dev/null 2>&1
+echo -e "${azul}9/14 [ OK ] Verificando / Instalando apache2 - utils 2/2${reset}"
+sudo apt install -y apache2-utils > /dev/null 2>&1
+echo -e "${azul}10/14 [ OK ] Verificando / Instalando Git${reset}"
+sudo apt install -y git > /dev/null 2>&1
+echo -e "${azul}11/14 [ OK ] Verificando / Instalando python3${reset}"
+sudo apt install -y python3 > /dev/null 2>&1
+echo -e "${azul}12/14 [ OK ] Verificando / Instalando neofetch${reset}"
+sudo apt install -y neofetch > /dev/null 2>&1
 
-# 4/14 - [ OK ] Verificando / Instalando dialog
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando dialog${reset}"
-dpkg -s "dialog" >/dev/null 2>&1 || sudo apt install -y "dialog"
-contador=$((contador + 1))
+echo -e "${azul}13/14 [ OK ] Fazendo Update${reset}"
+sudo apt update -y > /dev/null 2>&1
 
-# 5/14 - [ OK ] Verificando / Instalando jq 1/2
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando jq 1/2${reset}"
-dpkg -s "jq" >/dev/null 2>&1 || sudo apt install -y "jq"
-contador=$((contador + 1))
-
-# 6/14 - [ OK ] Verificando / Instalando jq 2/2 (já instalado no passo anterior, mas para manter a ordem)
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando jq 2/2${reset}"
-contador=$((contador + 1))
-
-# 7/14 - [ OK ] Verificando / Instalando apache2 - utils 1/2
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando apache2 - utils 1/2${reset}"
-dpkg -s "apache2-utils" >/dev/null 2>&1 || sudo apt install -y "apache2-utils"
-contador=$((contador + 1))
-
-# 8/14 - [ OK ] Verificando / Instalando apache2 - utils 2/2 (já instalado no passo anterior)
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando apache2 - utils 2/2${reset}"
-contador=$((contador + 1))
-
-# 9/14 - [ OK ] Verificando / Instalando Git
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando Git${reset}"
-dpkg -s "git" >/dev/null 2>&1 || sudo apt install -y "git"
-contador=$((contador + 1))
-
-# 10/14 - [ OK ] Verificando / Instalando python3
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando python3${reset}"
-dpkg -s "python3" >/dev/null 2>&1 || sudo apt install -y "python3"
-contador=$((contador + 1))
-
-# 11/14 - [ OK ] Fazendo Update
-echo -e "${azul}${contador}/${total_steps} [ OK ] Fazendo Update${reset}"
-contador=$((contador + 1))
-sudo apt update -y
-
-# 12/14 - [ OK ] Fazendo Upgrade
-echo -e "${azul}${contador}/${total_steps} [ OK ] Fazendo Upgrade${reset}"
-contador=$((contador + 1))
-sudo apt upgrade -y
-
-# 13/14 - [ OK ] Verificando / Instalando neofetch
-echo -e "${azul}${contador}/${total_steps} [ OK ] Verificando / Instalando neofetch${reset}"
-dpkg -s "neofetch" >/dev/null 2>&1 || sudo apt install -y "neofetch"
-contador=$((contador + 1))
-
-# 14/14 - [ OK ] Baixando o script (esta etapa será a exibição do seu banner e menu)
-echo -e "${azul}${contador}/${total_steps} [ OK ] Baixando o script${reset}"
+echo -e "${azul}14/14 [ OK ] Fazendo Upgrade${reset}"
+sudo apt upgrade -y > /dev/null 2>&1
 
 echo ""
 echo -e "${amarelo}Aguarde enquanto verificamos algumas informações...${reset}"
