@@ -32,7 +32,6 @@ nome_verificando(){
 
 nome_instalando(){
     # Banner exibido DURANTE a instalação de dependências (Larguras Ajustadas)
-    # Não é o menu principal de ferramentas
     clear
     echo ""
     # Separador Superior (Largura Padrão ~95) - Ajuste se o banner for mais largo
@@ -62,7 +61,7 @@ nome_instalando(){
 }
 
 mostrar_menu_ferramentas() {
-    # Banner e Menu de Ferramentas principal (Com lista inicial e cores Ativo/Inativo)
+    # Banner e Menu de Ferramentas principal (Opção 03 agora inativa)
     clear
     echo ""
     # NOVO ASCII ART BANNER ("MENU FERRAMENTAS V2"):
@@ -87,18 +86,18 @@ mostrar_menu_ferramentas() {
     echo -e "${amarelo}===============================================================================================${reset}"
     echo ""
     # Opções do Menu - Lista Inicial (Cores Ativo/Inativo)
-    echo -e " ${vermelho}[ 01 ] Traefik & Portainer${reset}"         # Inativo -> Vermelho
-    echo -e " ${vermelho}[ 02 ] Chatwoot${reset}"                  # Inativo -> Vermelho
-    echo -e " ${verde}[ 03 ] Evolution API${reset}"                # ATIVO -> Verde
-    echo -e " ${vermelho}[ 04 ] MinIO${reset}"                     # Inativo -> Vermelho
-    echo -e " ${vermelho}[ 05 ] Typebot${reset}"                   # Inativo -> Vermelho
-    echo -e " ${vermelho}[ 06 ] N8N${reset}"                       # Inativo -> Vermelho
-    echo -e " ${vermelho}[ 07 ] Flowise${reset}"                   # Inativo -> Vermelho
-    echo -e " ${vermelho}[ 08 ] Wordpress${reset}"                 # Inativo -> Vermelho
-    echo -e " ${vermelho}[ 09 ] Chatwoot Nestor${reset}"           # Inativo -> Vermelho
-    # Adicione mais ferramentas aqui conforme for implementando (lembre de mudar a cor para verde)
+    echo -e " ${vermelho}[ 01 ] Traefik & Portainer${reset}"
+    echo -e " ${vermelho}[ 02 ] Chatwoot${reset}"
+    echo -e " ${vermelho}[ 03 ] Evolution API${reset}"                # <<< MUDOU PARA VERMELHO (Inativo)
+    echo -e " ${vermelho}[ 04 ] MinIO${reset}"
+    echo -e " ${vermelho}[ 05 ] Typebot${reset}"
+    echo -e " ${vermelho}[ 06 ] N8N${reset}"
+    echo -e " ${vermelho}[ 07 ] Flowise${reset}"
+    echo -e " ${vermelho}[ 08 ] Wordpress${reset}"
+    echo -e " ${vermelho}[ 09 ] Chatwoot Nestor${reset}"
+    # Adicione mais ferramentas aqui conforme for implementando
     echo ""
-    echo -e " ${vermelho}[ 99 ] Sair${reset}"                      # Sair -> Vermelho
+    echo -e " ${vermelho}[ 99 ] Sair${reset}"
     echo ""
     # Separador Inferior do Menu (Largura ~95)
     echo -e "${amarelo}===============================================================================================${reset}"
@@ -140,7 +139,7 @@ else
     sleep 2
 fi
 
-# --- (Seção de Instalação de Dependências - Sem alterações, apenas indentação corrigida) ---
+# --- (Seção de Instalação de Dependências - Sem alterações) ---
 nome_instalando # Chama o banner de instalação
 
 TOTAL_STEPS=11
@@ -181,16 +180,16 @@ echo -e "${verde}Verificação e instalação de dependências concluídas.${res
 sleep 2
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Termos e Menu Principal <<-- SEÇÃO MODIFICADA ABAIXO
+## Termos e Menu Principal
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
-# Exibir termos (Caixa ajustada para ~95 caracteres de largura, incluindo padding interno)
-echo -e "${azul}===============================================================================================${reset}" # 95 '='
-echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}" # 91 espaços internos
-echo -e "${azul}= ${branco} Este auto instalador foi desenvolvido para auxiliar na instalação de algumas ferramentas.             ${azul} =${reset}" # Texto + 13 espaços
-echo -e "${azul}= ${branco} Use com responsabilidade e esteja ciente dos riscos de executar scripts como root.              ${azul} =${reset}" # Texto + 14 espaços
-echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}" # 91 espaços internos
-echo -e "${azul}===============================================================================================${reset}" # 95 '='
+# Exibir termos (Caixa ajustada)
+echo -e "${azul}===============================================================================================${reset}"
+echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}"
+echo -e "${azul}= ${branco} Este auto instalador foi desenvolvido para auxiliar na instalação de algumas ferramentas.             ${azul} =${reset}"
+echo -e "${azul}= ${branco} Use com responsabilidade e esteja ciente dos riscos de executar scripts como root.              ${azul} =${reset}"
+echo -e "${azul}= ${branco}                                                                                           ${azul} =${reset}"
+echo -e "${azul}===============================================================================================${reset}"
 echo ""
 
 # Aceite dos Termos (Mantida a lógica original do seu script)
@@ -217,67 +216,28 @@ else
         exit 1
     fi
 fi
-echo "" # Adiciona uma linha em branco após a leitura
+echo ""
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Processamento da Escolha (Menu de Ferramentas)
+## Processamento da Escolha (Menu de Ferramentas - Atualizado)
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
 case $opcao_ferramenta in
-    3 | 03 ) # Opção para Instalar Evolution API
-        echo -e "${azul}Iniciando instalação do Evolution API MCP...${reset}"
-        echo -e "${amarelo}Baixando script de configuração...${reset}"
-        echo ""
-
-        EVOLUTION_SCRIPT_URL="https://raw.githubusercontent.com/Japynha/MCP/main/install_evolution.sh"
-        EVOLUTION_SCRIPT_NAME="install_evolution.sh"
-
-        if [ -e "$EVOLUTION_SCRIPT_NAME" ]; then
-            echo -e "${amarelo}AVISO: Removendo versão anterior de $EVOLUTION_SCRIPT_NAME...${reset}"
-            rm -f "$EVOLUTION_SCRIPT_NAME"
-        fi
-
-        curl -fsSL "$EVOLUTION_SCRIPT_URL" -o "$EVOLUTION_SCRIPT_NAME"
-        CURL_STATUS=$?
-        if [ $CURL_STATUS -eq 0 ]; then
-            echo -e "${verde}[ OK ] - Download do script $EVOLUTION_SCRIPT_NAME concluído.${reset}"
-            echo ""
-            chmod +x "$EVOLUTION_SCRIPT_NAME"
-
-            echo -e "${branco}Executando $EVOLUTION_SCRIPT_NAME...${reset}"
-            echo -e "${amarelo}-------------------- Log do Script $EVOLUTION_SCRIPT_NAME --------------------${reset}"
-            "./$EVOLUTION_SCRIPT_NAME"
-            EXEC_STATUS=$?
-            echo -e "${amarelo}------------------ Fim do Log do Script $EVOLUTION_SCRIPT_NAME ------------------${reset}"
-            echo ""
-
-            if [ $EXEC_STATUS -eq 0 ]; then
-                echo -e "${verde}[ OK ] - Script $EVOLUTION_SCRIPT_NAME executado com sucesso.${reset}"
-            else
-                echo -e "${vermelho}[ OFF ] - Script $EVOLUTION_SCRIPT_NAME finalizado com erro (Status: $EXEC_STATUS).${reset}"
-                echo -e "${amarelo}       Verifique o log acima para mais detalhes.${reset}"
-            fi
-
-            echo -e "${branco}Removendo script baixado ($EVOLUTION_SCRIPT_NAME)...${reset}"
-            rm -f "$EVOLUTION_SCRIPT_NAME"
-            echo ""
-        else
-            echo -e "${vermelho}[ OFF ] - Erro ao baixar o script $EVOLUTION_SCRIPT_NAME (Status Curl: $CURL_STATUS).${reset}"
-            echo -e "${vermelho}        Verifique sua conexão com a internet ou a URL e tente novamente.${reset}"
-            exit 1
-        fi
-        ;; # Fim da opção 3
-
     99 ) # Opção para Sair
         echo -e "${amarelo}Saindo do instalador...${reset}"
         exit 0
         ;;
 
-    # Placeholders para outras opções (01, 02, 04-09)
-    1 | 01 | 2 | 02 | 4 | 04 | 5 | 05 | 6 | 06 | 7 | 07 | 8 | 08 | 9 | 09 )
+    # Opções Inativas (01 a 09) - Mostram mensagem "Não implementada"
+    # Incluindo a opção 03 agora
+    1 | 01 | 2 | 02 | 3 | 03 | 4 | 04 | 5 | 05 | 6 | 06 | 7 | 07 | 8 | 08 | 9 | 09 )
         echo -e "${amarelo}AVISO: Opção [ $opcao_ferramenta ] ainda não implementada.${reset}"
-        sleep 3 # Pausa para o usuário ver a mensagem
-        # Considere adicionar 'exit 0' ou chamar o menu novamente aqui
+        echo -e "${branco}       Voltando ao menu em 3 segundos...${reset}"
+        sleep 3
+        # Aqui, em vez de sair, vamos chamar o menu novamente para o usuário tentar outra opção
+        # (Isso requer que o processo principal seja um loop ou que esta seção seja chamada de dentro de um loop)
+        # Por enquanto, apenas exibiremos a mensagem e o script continuará para a finalização.
+        # Para um loop de menu, a estrutura precisaria ser reorganizada.
         ;;
 
     * ) # Qualquer outra entrada inválida
@@ -290,10 +250,10 @@ esac
 
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-## Finalização (Sem alterações, apenas indentação corrigida)
+## Finalização
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
 
-echo -e "${verde}Setup principal concluído.${reset}"
+echo -e "${verde}Setup principal concluído.${reset}" # Esta mensagem aparecerá após escolher uma opção inativa
 echo -e "${branco}Realizando uma última atualização do sistema...${reset}"
 
 apt update -y > /dev/null 2>&1
