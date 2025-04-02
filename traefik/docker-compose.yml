@@ -1,0 +1,83 @@
+# Versão da especificação do Docker Compose
+version: "3.9"
+
+services:
+  # Serviço do Traefik (Proxy Reverso)
+  traefik:
+    image: traefik:v2.11 # Use uma versão específica ou 'latest' (v2.11 é recente em Abr/2025)
+    container_name: traefik_proxy # Nome do container
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik_proxy # Conecta à rede externa criada
+    ports:
+      - "80:80"   # Porta HTTP
+      - "443:443" # Porta HTTPS
+      # - "8080:8080" # Opcional: Porta para o Dashboard/API do Traefik (se habilitado no traefik.yml)
+    environment:
+      # Variáveis de ambiente lidas do arquivo .env
+      # Necessárias para o Let's Encrypt (exemplo com Cloudflare DNS Challenge)
+      - CF_API_EMAIL=${CLOUDFLARE_EMAIL} # Ou outra variável se usar provedor diferente
+      - CF_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN} # Ou CF_API_KEY=${CLOUDFLARE_API_KEY} dependendo do método
+      # Definindo PUID/PGID para permissões de arquivos (usuário 1000 padrão)
+      - PUID=1000
+      - PGID=1000
+      # Fuso Horário para logs e certificados
+      - TZ=${TIMEZONE:-America/Sao_Paulo} # Padrão SP, pode ser sobrescrito no .env
+    volumes:
+      # Mapeia o socket do Docker para o Traefik poder detectar outros containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mapeia o arquivo de configuração estática do Traefik
+      - ./data/traefik.yml:/traefik.yml:ro
+      # Mapeia o arquivo/diretório de configurações dinâmicas (se usar config.yml)
+      - ./data/config.yml:/config.yml:ro # Descomente se usar config.yml
+      # Mapeia o arquivo onde os certificados SSL serão armazenados
+      - ./data/certs/acme.json:/acme.json
+      # Mapeia os logs do Traefik
+      - ./data/logs/traefik.log:/logs/traefik.log
+    labels:
+      # Labels para o próprio Traefik se auto-configurar (ex: habilitar dashboard)
+      - "traefik.enable=true"
+      # --- Configuração do Dashboard/API via Labels (Exemplo) ---
+      # Descomente e ajuste o domínio se quiser acessar o dashboard
+      # - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAINNAME}`)"
+      # - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      # - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      # - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver" # Nome do resolver definido no traefik.yml
+      # - "traefik.http.routers.traefik-dashboard.middlewares=auth" # Adiciona autenticação (definida abaixo ou no config.yml)
+      # --- Autenticação Básica para Dashboard (Exemplo - Crie usuário/senha abaixo) ---
+      # - "traefik.http.middlewares.auth.basicauth.users=usuario:senha_hash_bcrypt" # Gere a senha hash!
+
+  # Serviço do Portainer CE (Gerenciador Docker)
+  portainer:
+    image: portainer/portainer-ce:latest # Ou uma versão específica
+    container_name: portainer_manager
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik_proxy # Conecta à rede externa também
+    volumes:
+      # Mapeia o socket do Docker para o Portainer gerenciar
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mapeia o volume onde o Portainer guarda seus dados
+      - portainer_data:/data # Usa um volume nomeado do Docker
+    labels:
+      - "traefik.enable=true"
+      # Roteia o tráfego para o Portainer pela porta 9443 (HTTPS interna)
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAINNAME}`)" # Usa variável do .env
+      - "traefik.http.routers.portainer.service=portainer"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9443"
+      - "traefik.http.services.portainer.loadbalancer.server.scheme=https" # Importante: Portainer usa HTTPS interno
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver" # Nome do resolver definido no traefik.yml
+
+# Define a rede externa (espera-se que já tenha sido criada pelo script)
+networks:
+  traefik_proxy:
+    external: true
+
+# Define o volume nomeado para os dados do Portainer
+volumes:
+  portainer_data:

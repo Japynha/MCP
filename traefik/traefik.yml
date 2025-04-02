@@ -1,0 +1,75 @@
+# Configuração Estática do Traefik v2
+
+# -- Log --
+log:
+  level: INFO # Nível de log (DEBUG, INFO, WARNING, ERROR)
+  filePath: /logs/traefik.log # Caminho DENTRO do container, mapeado no docker-compose.yml
+  format: json
+
+# -- API / Dashboard --
+api:
+  dashboard: true # Habilita o dashboard
+  # insecure: true # DESCOMENTE APENAS PARA TESTES LOCAIS SEM DOMÍNIO/HTTPS. NÃO RECOMENDADO EM PRODUÇÃO.
+  # O acesso seguro ao dashboard será configurado via Rótulos (labels) no docker-compose.yml
+
+# -- EntryPoints (Portas de Entrada) --
+entryPoints:
+  web:
+    address: ":80" # Ouve na porta 80 para HTTP
+    # Redirecionamento automático de HTTP para HTTPS
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true # Usa redirecionamento 301 (permanente)
+
+  websecure:
+    address: ":443" # Ouve na porta 443 para HTTPS
+    # Configurações TLS (serão gerenciadas pelo Let's Encrypt)
+    http:
+      tls:
+        certResolver: myresolver # Nome do resolvedor de certificados definido abaixo
+        domains: # Opcional: Domínios principais para o TLS - Traefik tenta gerar para os hosts dos routers
+          - main: "${DOMAINNAME}" # Lê o domínio principal do .env
+            sans: # Subdomínios alternativos (SANs)
+              - "*.${DOMAINNAME}" # Certificado Wildcard (*.seusite.com)
+
+# -- Providers (Como o Traefik descobre serviços) --
+providers:
+  # Provedor Docker: Permite que o Traefik leia labels dos containers
+  docker:
+    endpoint: "unix:///var/run/docker.sock" # Caminho para o socket Docker
+    exposedByDefault: false # IMPORTANTE: Não expor containers automaticamente, apenas os que tiverem label "traefik.enable=true"
+    network: traefik_proxy # Nome da rede Docker que o Traefik vai monitorar
+
+  # Provedor File: Opcional, para carregar configurações dinâmicas de arquivos (ex: config.yml)
+  # file:
+  #   filename: /config.yml # Caminho DENTRO do container, mapeado no docker-compose.yml
+  #   watch: true # Monitora o arquivo por mudanças
+
+# -- Certificate Resolvers (Como obter certificados SSL/TLS) --
+certificatesResolvers:
+  # Nome do resolvedor (deve ser o mesmo usado nos EntryPoints e Routers)
+  myresolver:
+    acme:
+      email: "${CLOUDFLARE_EMAIL}" # Email para notificações do Let's Encrypt (lido do .env)
+      storage: /acme.json # Caminho para o arquivo que armazena os certificados (dentro do container)
+      # Método de Desafio DNS-01 usando Cloudflare (REQUER TOKENS NO .ENV)
+      # Se você não usa Cloudflare, precisará mudar esta seção para outro provedor DNS
+      # ou usar o desafio HTTP-01 ou TLS-ALPN-01 (mais simples se não precisar de wildcard)
+      dnsChallenge:
+        provider: cloudflare
+        delayBeforeCheck: 0
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
+        # As credenciais (CF_API_EMAIL, CF_DNS_API_TOKEN ou CF_API_KEY) são lidas
+        # das variáveis de ambiente definidas no docker-compose.yml (que por sua vez lê do .env)
+
+      # --- Alternativa: Desafio HTTP-01 (Mais simples, mas NÃO funciona para certificados wildcard *) ---
+      # httpChallenge:
+      #   entryPoint: web # Usa a porta 80 (web) para o desafio
+
+      # --- Alternativa: Desafio TLS-ALPN-01 (Usa porta 443) ---
+      # tlsChallenge: {}
