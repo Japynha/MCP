@@ -37,13 +37,13 @@ providers:
     exposedByDefault: false # Só expor containers com label traefik.enable=true
     network: traefik_proxy
 
-# Certificate Resolvers
+# Certificate Resolvers (Como obter certificados SSL/TLS - Usando HTTP-01)
 certificatesResolvers:
-  myresolver:
+  myresolver: # Nome do resolvedor referenciado no compose
     acme:
       # Email para notificações Let's Encrypt (lido do .env)
       email: "${LETSENCRYPT_EMAIL}"
       storage: /acme.json # Caminho de armazenamento dos certificados
-      # Método de Desafio HTTP-01 (Não precisa de API de DNS)
+      # Método de Desafio HTTP-01 (Não precisa de API de DNS, usa a porta 80)
       httpChallenge:
-        entryPoint: web # Usa a porta 80 (entrypoint 'web') para o desafio
+        entryPoint: web # Usa o entrypoint 'web' (porta 80) para o desafio
