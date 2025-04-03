@@ -254,56 +254,43 @@ install_traefik_portainer() {
     sudo curl -sSL "${GITHUB_RAW_URL}/traefik.yml" -o "${INSTALL_DIR}/data/traefik.yml"; if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/data/traefik.yml" ]; then echo -e "${vermelho}   ERRO: Falha download traefik.yml. Verifique URL/arquivo no GitHub. Abortando.${reset}"; return 1; fi
     echo -e "${verde}   Arquivos baixados com sucesso.${reset}"
 
-    # --- 4. Coleta e Confirmação de Dados do Usuário ---
-    _update_traefik_step "COLETANDO DADOS DE CONFIGURAÇÃO"
-    while ! $INPUT_CONFIRMED; do
-        # Coleta
-        while [[ -z "$DOMAINNAME" ]]; do read -p "   - Digite seu domínio principal (ex: seusite.com): " DOMAINNAME; if [[ -z "$DOMAINNAME" ]]; then echo -e "${vermelho}     O domínio não pode ser vazio!${reset}"; fi; done
-        read -p "   - Subdomínio Portainer [Padrão: ${PORTAINER_SUBDOMAIN}]: " user_portainer_subdomain; PORTAINER_SUBDOMAIN=${user_portainer_subdomain:-$PORTAINER_SUBDOMAIN}
-        read -p "   - Subdomínio Dashboard Traefik [Padrão: ${TRAEFIK_SUBDOMAIN}]: " user_traefik_subdomain; TRAEFIK_SUBDOMAIN=${user_traefik_subdomain:-$TRAEFIK_SUBDOMAIN}
-        while [[ -z "$CLOUDFLARE_EMAIL" ]]; do read -p "   - Digite seu email da conta Cloudflare: " CLOUDFLARE_EMAIL; if [[ -z "$CLOUDFLARE_EMAIL" ]]; then echo -e "${vermelho}     O email não pode ser vazio!${reset}"; fi; done
-        while [[ -z "$CLOUDFLARE_DNS_API_TOKEN" ]]; do read -p "   - Digite seu Token API Cloudflare (Edit Zone DNS): " CLOUDFLARE_DNS_API_TOKEN; if [[ -z "$CLOUDFLARE_DNS_API_TOKEN" ]]; then echo -e "${vermelho}     O Token API não pode ser vazio!${reset}"; fi; done
-        read -p "   - Fuso Horário [Padrão: ${TIMEZONE}]: " user_timezone; TIMEZONE=${user_timezone:-$TIMEZONE}
-        echo -e "${verde}   Informações preliminares coletadas.${reset}"
+    # --- 4. Obter Informações do Usuário (SEM CLOUDFLARE TOKEN) ---
+echo -e "${branco}=> Coletando informações de configuração...${reset}"
+# ... (Variáveis locais DOMAINNAME, PORTAINER_SUBDOMAIN, etc. continuam aqui) ...
+local LETSENCRYPT_EMAIL="" # Mudou nome da variável
 
-        # Confirmação
-        echo ""; echo -e "${amarelo}--- Por favor, confirme os dados ---${reset}"
-        echo -e "${branco}  Dominio Principal:       ${verde}${DOMAINNAME}${reset}"
-        echo -e "${branco}  URL Portainer:           ${verde}https://${PORTAINER_SUBDOMAIN}.${DOMAINNAME}${reset}"
-        echo -e "${branco}  URL Dashboard Traefik:   ${verde}https://${TRAEFIK_SUBDOMAIN}.${DOMAINNAME}${reset}"
-        echo -e "${branco}  Email Cloudflare:        ${verde}${CLOUDFLARE_EMAIL}${reset}"
-        echo -e "${branco}  Token Cloudflare:        ${verde}***${reset}" # Não mostrar o token
-        echo -e "${branco}  Fuso Horário:            ${verde}${TIMEZONE}${reset}"
-        echo ""
+while [[ -z "$DOMAINNAME" ]]; do read -p "   - Digite seu domínio principal (ex: seusite.com): " DOMAINNAME; if [[ -z "$DOMAINNAME" ]]; then echo -e "${vermelho}     O domínio não pode ser vazio!${reset}"; fi; done
+read -p "   - Subdomínio Portainer [Padrão: ${PORTAINER_SUBDOMAIN}]: " user_portainer_subdomain; PORTAINER_SUBDOMAIN=${user_portainer_subdomain:-$PORTAINER_SUBDOMAIN}
+read -p "   - Subdomínio Dashboard Traefik [Padrão: ${TRAEFIK_SUBDOMAIN}]: " user_traefik_subdomain; TRAEFIK_SUBDOMAIN=${user_traefik_subdomain:-$TRAEFIK_SUBDOMAIN}
+# Pergunta apenas pelo Email para Let's Encrypt
+while [[ -z "$LETSENCRYPT_EMAIL" ]]; do
+    read -p "   - Digite um email válido (para notificações Let's Encrypt): " LETSENCRYPT_EMAIL
+     if [[ -z "$LETSENCRYPT_EMAIL" ]]; then
+         echo -e "${vermelho}     O email não pode ser vazio!${reset}"
+    fi
+done
+read -p "   - Fuso Horário [Padrão: ${TIMEZONE}]: " user_timezone; TIMEZONE=${user_timezone:-$TIMEZONE}
+echo -e "${verde}   Informações preliminares coletadas.${reset}"
+sleep 1
 
-        local confirmation=""
-        while true; do
-            read -r -p "As informações estão corretas? (Y/N): " confirmation
-            case $confirmation in
-                [Yy]* ) INPUT_CONFIRMED=true; break ;;
-                [Nn]* ) echo -e "${amarelo}Ok, vamos pedir as informações novamente.${reset}"; sleep 1; clear; _update_traefik_step "COLETANDO DADOS DE CONFIGURAÇÃO"; DOMAINNAME=""; CLOUDFLARE_EMAIL=""; CLOUDFLARE_DNS_API_TOKEN=""; break ;; # Limpa vars e repete
-                * )     echo -e "${vermelho}Resposta inválida. Digite Y ou N.${reset}" ;;
-            esac
-        done
-    done
-    echo -e "${verde}   Informações confirmadas.${reset}"
+# --- Confirmação (ajustada) ---
+echo ""; echo -e "${amarelo}--- Por favor, confirme os dados ---${reset}"
+echo -e "${branco}  Dominio Principal:       ${verde}${DOMAINNAME}${reset}"
+echo -e "${branco}  URL Portainer:           ${verde}https://${PORTAINER_SUBDOMAIN}.${DOMAINNAME}${reset}"
+echo -e "${branco}  URL Dashboard Traefik:   ${verde}https://${TRAEFIK_SUBDOMAIN}.${DOMAINNAME}${reset}"
+echo -e "${branco}  Email Let's Encrypt:     ${verde}${LETSENCRYPT_EMAIL}${reset}" # Variável mudou
+echo -e "${branco}  Fuso Horário:            ${verde}${TIMEZONE}${reset}"
+echo ""
+local confirmation=""; INPUT_CONFIRMED=false
+while true; do read -r -p "As informações estão corretas? (Y/N): " confirmation; case $confirmation in [Yy]*) INPUT_CONFIRMED=true; break ;; [Nn]*) echo -e "${amarelo}Ok, pedindo infos novamente.${reset}"; sleep 1; clear; _update_traefik_step "COLETANDO DADOS DE CONFIGURAÇÃO"; DOMAINNAME=""; LETSENCRYPT_EMAIL=""; break ;; *) echo -e "${vermelho}Inválido.${reset}";; esac; done
+if ! $INPUT_CONFIRMED; then continue; fi # Volta a pedir se N
+echo -e "${verde}   Informações confirmadas.${reset}"
+sleep 1
 
-    # --- 5. Criar Arquivo .env REAL ---
-    _update_traefik_step "CRIANDO ARQUIVO .ENV"
-    echo -e "${branco}   Gerando ${INSTALL_DIR}/.env...${reset}"
-    sudo rm -f "${INSTALL_DIR}/.env"
-    sudo tee "${INSTALL_DIR}/.env" > /dev/null << EOF
-# Arquivo gerado pelo script de setup
-DOMAINNAME=${DOMAINNAME}
-PORTAINER_SUBDOMAIN=${PORTAINER_SUBDOMAIN}
-TRAEFIK_SUBDOMAIN=${TRAEFIK_SUBDOMAIN}
-CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL}
-CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
-TIMEZONE=${TIMEZONE}
-PUID=${PUID}
-PGID=${PGID}
-EOF
-    if [ $? -eq 0 ] && [ -f "${INSTALL_DIR}/.env" ]; then echo -e "${verde}   Arquivo .env criado com sucesso.${reset}"; else echo -e "${vermelho}   ERRO: Falha ao criar arquivo .env. Abortando.${reset}"; return 1; fi
+# --- 5. Criar Arquivo .env REAL (SEM CLOUDFLARE TOKEN) ---
+echo -e "${branco}=> Criando arquivo .env em ${INSTALL_DIR}...${reset}"
+sudo rm -f "${INSTALL_DIR}/.env"
+sudo tee "${INSTALL_DIR}/.env" > /dev/null << EOF
 
     # --- 6. Criar acme.json ---
     _update_traefik_step "PREPARANDO ARQUIVO ACME.JSON (SSL)"
