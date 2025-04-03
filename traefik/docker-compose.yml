@@ -4,8 +4,8 @@ version: "3.9"
 services:
   # Serviço do Traefik (Proxy Reverso)
   traefik:
-    image: traefik:v2.11 # Use uma versão específica ou 'latest' (v2.11 é recente em Abr/2025)
-    container_name: traefik_proxy # Nome do container
+    image: traefik:v2.11 # Ou use 'latest'
+    container_name: traefik_proxy
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -14,40 +14,40 @@ services:
     ports:
       - "80:80"   # Porta HTTP
       - "443:443" # Porta HTTPS
-      # - "8080:8080" # Opcional: Porta para o Dashboard/API do Traefik (se habilitado no traefik.yml)
     environment:
-      # Variáveis de ambiente lidas do arquivo .env
-      # Necessárias para o Let's Encrypt (exemplo com Cloudflare DNS Challenge)
-      - CF_API_EMAIL=${CLOUDFLARE_EMAIL} # Ou outra variável se usar provedor diferente
-      - CF_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN} # Ou CF_API_KEY=${CLOUDFLARE_API_KEY} dependendo do método
-      # Definindo PUID/PGID para permissões de arquivos (usuário 1000 padrão)
+      # --- Variáveis REMOVIDAS: CF_API_EMAIL, CF_DNS_API_TOKEN ---
+      # Definindo PUID/PGID para permissões de arquivos
       - PUID=1000
       - PGID=1000
-      # Fuso Horário para logs e certificados
-      - TZ=${TIMEZONE:-America/Sao_Paulo} # Padrão SP, pode ser sobrescrito no .env
+      # Fuso Horário lido do .env (com padrão)
+      - TZ=${TIMEZONE:-America/Sao_Paulo}
+      # Adicione aqui outras variáveis globais se precisar (ex: para outros provedores DNS se mudar o traefik.yml)
     volumes:
-      # Mapeia o socket do Docker para o Traefik poder detectar outros containers
+      # Mapeia o socket do Docker
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Mapeia o arquivo de configuração estática do Traefik
+      # Mapeia a configuração estática (traefik.yml)
       - ./data/traefik.yml:/traefik.yml:ro
-      # Mapeia o arquivo/diretório de configurações dinâmicas (se usar config.yml)
-      - ./data/config.yml:/config.yml:ro # Descomente se usar config.yml
-      # Mapeia o arquivo onde os certificados SSL serão armazenados
+      # Mapeia a configuração dinâmica (opcional, descomente se usar)
+      # - ./data/config.yml:/config.yml:ro
+      # Mapeia o arquivo de certificados SSL
       - ./data/certs/acme.json:/acme.json
       # Mapeia os logs do Traefik
       - ./data/logs/traefik.log:/logs/traefik.log
     labels:
-      # Labels para o próprio Traefik se auto-configurar (ex: habilitar dashboard)
+      # Habilita o Traefik para ele mesmo
       - "traefik.enable=true"
       # --- Configuração do Dashboard/API via Labels (Exemplo) ---
-      # Descomente e ajuste o domínio se quiser acessar o dashboard
-      # - "traefik.http.routers.traefik-dashboard.rule=Host(`<span class="math-inline">\{TRAEFIK\_SUBDOMAIN\}\.</span>{DOMAINNAME}`)"
-      # - "traefik.http.routers.traefik-dashboard.service=api@internal"
-      # - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
-      # - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver" # Nome do resolver definido no traefik.yml
-      # - "traefik.http.routers.traefik-dashboard.middlewares=auth" # Adiciona autenticação (definida abaixo ou no config.yml)
-      # --- Autenticação Básica para Dashboard (Exemplo - Crie usuário/senha abaixo) ---
-      # - "traefik.http.middlewares.auth.basicauth.users=usuario:senha_hash_bcrypt" # Gere a senha hash!
+      # Se quiser habilitar o dashboard, descomente estas linhas
+      # ATENÇÃO: Lembre-se de configurar autenticação (ex: basicauth abaixo)
+      #- "traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_SUBDOMAIN}.${DOMAINNAME}`)" # <<< USA VARIÁVEL DE SUBDOMÍNIO
+      #- "traefik.http.routers.traefik-dashboard.service=api@internal"
+      #- "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      #- "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver"
+      #- "traefik.http.routers.traefik-dashboard.middlewares=auth"
+      # --- Autenticação Básica para Dashboard (Exemplo) ---
+      # Crie um usuário/senha com htpasswd e cole aqui se usar o middleware 'auth'
+      # Ex: htpasswd -nb usuario senhaforte | sed -e s/\\$/\\$\\$/g
+      # - "traefik.http.middlewares.auth.basicauth.users=usuario:$$apr1$$...$$"
 
   # Serviço do Portainer CE (Gerenciador Docker)
   portainer:
@@ -59,21 +59,21 @@ services:
     networks:
       - traefik_proxy # Conecta à rede externa também
     volumes:
-      # Mapeia o socket do Docker para o Portainer gerenciar
+      # Mapeia o socket do Docker
       - /var/run/docker.sock:/var/run/docker.sock
-      # Mapeia o volume onde o Portainer guarda seus dados
-      - portainer_data:/data # Usa um volume nomeado do Docker
+      # Mapeia o volume de dados do Portainer
+      - portainer_data:/data # Usa um volume nomeado
     labels:
       - "traefik.enable=true"
-      # Roteia o tráfego para o Portainer pela porta 9443 (HTTPS interna)
-      - "traefik.http.routers.portainer.rule=Host(`<span class="math-inline">\{PORTAINER\_SUBDOMAIN\}\.</span>{DOMAINNAME}`)"
+      # Roteia o tráfego para o Portainer (usando variável de subdomínio)
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_SUBDOMAIN}.${DOMAINNAME}`)" # <<< USA VARIÁVEL DE SUBDOMÍNIO
       - "traefik.http.routers.portainer.service=portainer"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9443"
-      - "traefik.http.services.portainer.loadbalancer.server.scheme=https" # Importante: Portainer usa HTTPS interno
-      - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls.certresolver=myresolver" # Nome do resolver definido no traefik.yml
+      - "traefik.http.services.portainer.loadbalancer.server.port=9443" # Porta interna do Portainer
+      - "traefik.http.services.portainer.loadbalancer.server.scheme=https" # Portainer usa HTTPS interno
+      - "traefik.http.routers.portainer.entrypoints=websecure" # Acessível via HTTPS
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver" # Usa o resolvedor Let's Encrypt definido no traefik.yml
 
-# Define a rede externa (espera-se que já tenha sido criada pelo script)
+# Define a rede externa
 networks:
   traefik_proxy:
     external: true
