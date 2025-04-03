@@ -192,161 +192,159 @@ mostrar_menu_ferramentas() {
 # FUNÇÕES DE INSTALAÇÃO DAS FERRAMENTAS
 #------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
+# FUNÇÕES DE INSTALAÇÃO DAS FERRAMENTAS
+#------------------------------------------------------------------------------
+
 install_traefik_portainer() {
-    # --- Variáveis Locais ---
+    # --- Variáveis Locais e Contadores ---
+    local traefik_step=0
+    local traefik_total_steps=8 # Total de fases principais nesta função
     local INSTALL_DIR="/opt/setup-edisongondo/traefik"
     local GITHUB_RAW_URL="https://raw.githubusercontent.com/Japynha/Setup_EdisonGondo/main/traefik" # *** CONFIRME BRANCH 'main' ***
     local DOMAINNAME=""
     local PORTAINER_SUBDOMAIN="portainer" # Padrão
     local TRAEFIK_SUBDOMAIN="traefik"     # Padrão
-    local LETSENCRYPT_EMAIL=""
+    local CLOUDFLARE_EMAIL=""             # Mantido por enquanto
+    local CLOUDFLARE_DNS_API_TOKEN=""     # Mantido por enquanto
     local TIMEZONE="America/Sao_Paulo"    # Padrão
     local PUID="1000"                     # Padrão
     local PGID="1000"                     # Padrão
     local INPUT_CONFIRMED=false
+    local DOCKER_COMPOSE_CMD=""
+    local traefik_ok=false
+    local portainer_ok=false
 
-    # --- Banner de Coleta de Dados ---
-    clear
-    echo -e "${verde}-----------------------------------------------------------------------${reset}"
-    echo -e "${verde} Configuração Inicial: Traefik & Portainer${reset}"
-    echo -e "${verde}-----------------------------------------------------------------------${reset}"
-    echo -e "${branco} Precisamos de algumas informações para configurar os serviços.${reset}"
-    echo -e "${amarelo}===============================================================================================${reset}"
-    echo -e "${amarelo}= ${branco}                               Preencha as informações solicitadas abaixo                               ${amarelo} =${reset}"
-    echo -e "${amarelo}===============================================================================================${reset}"
-    echo ""
+    # Helper para atualizar e mostrar passo
+    _update_traefik_step() {
+        traefik_step=$((traefik_step + 1))
+        echo -e "${branco} ${reset}" # Linha em branco antes do passo
+        echo -e "${branco}• ${1} [${traefik_step}/${traefik_total_steps}]${reset}" # Título da Fase
+        sleep 1
+    }
 
-    # Loop para coletar e confirmar informações
+    # --- Banner de Início da Instalação Específica ---
+    clear # Limpa a tela antes de iniciar esta instalação
+    echo -e "${verde}-----------------------------------------------------------------------${reset}"
+    echo -e "${verde} Iniciando Instalação: Traefik & Portainer${reset}"
+    echo -e "${verde}-----------------------------------------------------------------------${reset}"
+    sleep 1
+
+    # --- 1. Criar Diretórios ---
+    _update_traefik_step "CRIANDO DIRETÓRIOS"
+    echo -e "${branco}   Diretório base: ${INSTALL_DIR}${reset}"
+    sudo mkdir -p "${INSTALL_DIR}/data/logs"; if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao criar diretório de logs. Abortando.${reset}"; return 1; fi
+    sudo mkdir -p "${INSTALL_DIR}/data/certs"; if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao criar diretório de certificados. Abortando.${reset}"; return 1; fi
+    echo -e "${verde}   Diretórios criados com sucesso.${reset}"
+
+    # --- 2. Criar Rede Docker ---
+    _update_traefik_step "CONFIGURANDO REDE DOCKER"
+    echo -e "${branco}   Verificando/Criando rede [traefik_proxy]...${reset}"
+    if ! sudo docker network inspect traefik_proxy > /dev/null 2>&1; then
+        echo -e "${amarelo}   Rede não encontrada. Criando...${reset}"
+        if sudo docker network create traefik_proxy > /dev/null; then echo -e "${verde}   Rede [traefik_proxy] criada.${reset}"; else echo -e "${vermelho}   ERRO: Falha ao criar rede Docker [traefik_proxy]. Abortando.${reset}"; return 1; fi
+    else echo -e "${verde}   Rede [traefik_proxy] já existe.${reset}"; fi
+
+    # --- 3. Baixar Arquivos de Configuração do SEU GitHub ---
+     _update_traefik_step "BAIXANDO ARQUIVOS DE CONFIGURAÇÃO"
+    echo -e "${branco}   Baixando de ${GITHUB_RAW_URL}...${reset}"
+    sudo rm -f "${INSTALL_DIR}/docker-compose.yml" "${INSTALL_DIR}/data/traefik.yml" # Limpa arquivos antigos
+    sudo curl -sSL "${GITHUB_RAW_URL}/docker-compose.yml" -o "${INSTALL_DIR}/docker-compose.yml"; if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/docker-compose.yml" ]; then echo -e "${vermelho}   ERRO: Falha download docker-compose.yml. Verifique URL/arquivo no GitHub. Abortando.${reset}"; return 1; fi
+    sudo curl -sSL "${GITHUB_RAW_URL}/traefik.yml" -o "${INSTALL_DIR}/data/traefik.yml"; if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/data/traefik.yml" ]; then echo -e "${vermelho}   ERRO: Falha download traefik.yml. Verifique URL/arquivo no GitHub. Abortando.${reset}"; return 1; fi
+    echo -e "${verde}   Arquivos baixados com sucesso.${reset}"
+
+    # --- 4. Coleta e Confirmação de Dados do Usuário ---
+    _update_traefik_step "COLETANDO DADOS DE CONFIGURAÇÃO"
     while ! $INPUT_CONFIRMED; do
-        # --- Coleta de Informações ---
-        echo -e "${branco}Passo 1/5${reset}"
-        while [[ -z "$DOMAINNAME" ]]; do
-            read -p "  Digite seu domínio principal (ex: seusite.com): " DOMAINNAME
-            if [[ -z "$DOMAINNAME" ]]; then echo -e "${vermelho}    O domínio não pode ser vazio!${reset}"; fi
-        done
+        # Coleta
+        while [[ -z "$DOMAINNAME" ]]; do read -p "   - Digite seu domínio principal (ex: seusite.com): " DOMAINNAME; if [[ -z "$DOMAINNAME" ]]; then echo -e "${vermelho}     O domínio não pode ser vazio!${reset}"; fi; done
+        read -p "   - Subdomínio Portainer [Padrão: ${PORTAINER_SUBDOMAIN}]: " user_portainer_subdomain; PORTAINER_SUBDOMAIN=${user_portainer_subdomain:-$PORTAINER_SUBDOMAIN}
+        read -p "   - Subdomínio Dashboard Traefik [Padrão: ${TRAEFIK_SUBDOMAIN}]: " user_traefik_subdomain; TRAEFIK_SUBDOMAIN=${user_traefik_subdomain:-$TRAEFIK_SUBDOMAIN}
+        while [[ -z "$CLOUDFLARE_EMAIL" ]]; do read -p "   - Digite seu email da conta Cloudflare: " CLOUDFLARE_EMAIL; if [[ -z "$CLOUDFLARE_EMAIL" ]]; then echo -e "${vermelho}     O email não pode ser vazio!${reset}"; fi; done
+        while [[ -z "$CLOUDFLARE_DNS_API_TOKEN" ]]; do read -p "   - Digite seu Token API Cloudflare (Edit Zone DNS): " CLOUDFLARE_DNS_API_TOKEN; if [[ -z "$CLOUDFLARE_DNS_API_TOKEN" ]]; then echo -e "${vermelho}     O Token API não pode ser vazio!${reset}"; fi; done
+        read -p "   - Fuso Horário [Padrão: ${TIMEZONE}]: " user_timezone; TIMEZONE=${user_timezone:-$TIMEZONE}
+        echo -e "${verde}   Informações preliminares coletadas.${reset}"
 
-        echo -e "\n${branco}Passo 2/5${reset}"
-        read -p "  Subdomínio para Portainer [Padrão: ${PORTAINER_SUBDOMAIN}]: " user_portainer_subdomain
-        PORTAINER_SUBDOMAIN=${user_portainer_subdomain:-$PORTAINER_SUBDOMAIN}
-
-        echo -e "\n${branco}Passo 3/5${reset}"
-        read -p "  Subdomínio para Dashboard Traefik [Padrão: ${TRAEFIK_SUBDOMAIN}]: " user_traefik_subdomain
-        TRAEFIK_SUBDOMAIN=${user_traefik_subdomain:-$TRAEFIK_SUBDOMAIN}
-
-        echo -e "\n${branco}Passo 4/5${reset}"
-        while [[ -z "$LETSENCRYPT_EMAIL" ]]; do
-            read -p "  Digite um email válido (para notificações Let's Encrypt): " LETSENCRYPT_EMAIL
-            if [[ -z "$LETSENCRYPT_EMAIL" ]]; then echo -e "${vermelho}    O email não pode ser vazio!${reset}"; fi
-            # Adicionar validação de formato de email aqui seria ideal, mas complexo em bash puro
-        done
-
-        echo -e "\n${branco}Passo 5/5${reset}"
-        read -p "  Fuso Horário [Padrão: ${TIMEZONE}]: " user_timezone
-        TIMEZONE=${user_timezone:-$TIMEZONE}
-
-        # --- Confirmação ---
-        echo ""
-        echo -e "${amarelo}===============================================================================================${reset}"
-        echo -e "${amarelo}= ${branco}                                Verifique se os dados abaixo estão certos                                ${amarelo} =${reset}"
-        echo -e "${amarelo}===============================================================================================${reset}"
+        # Confirmação
+        echo ""; echo -e "${amarelo}--- Por favor, confirme os dados ---${reset}"
         echo -e "${branco}  Dominio Principal:       ${verde}${DOMAINNAME}${reset}"
         echo -e "${branco}  URL Portainer:           ${verde}https://${PORTAINER_SUBDOMAIN}.${DOMAINNAME}${reset}"
         echo -e "${branco}  URL Dashboard Traefik:   ${verde}https://${TRAEFIK_SUBDOMAIN}.${DOMAINNAME}${reset}"
-        echo -e "${branco}  Email Let's Encrypt:     ${verde}${LETSENCRYPT_EMAIL}${reset}"
+        echo -e "${branco}  Email Cloudflare:        ${verde}${CLOUDFLARE_EMAIL}${reset}"
+        echo -e "${branco}  Token Cloudflare:        ${verde}***${reset}" # Não mostrar o token
         echo -e "${branco}  Fuso Horário:            ${verde}${TIMEZONE}${reset}"
-        echo -e "${amarelo}===============================================================================================${reset}"
         echo ""
 
         local confirmation=""
         while true; do
             read -r -p "As informações estão corretas? (Y/N): " confirmation
             case $confirmation in
-                [Yy]* ) INPUT_CONFIRMED=true; break ;; # Confirma e sai do loop de confirmação
-                [Nn]* ) echo -e "${amarelo}Ok, vamos pedir as informações novamente.${reset}"; sleep 1; clear; DOMAINNAME=""; LETSENCRYPT_EMAIL=""; break ;; # Limpa vars e sai do loop de confirmação para repetir o loop principal
+                [Yy]* ) INPUT_CONFIRMED=true; break ;;
+                [Nn]* ) echo -e "${amarelo}Ok, vamos pedir as informações novamente.${reset}"; sleep 1; clear; _update_traefik_step "COLETANDO DADOS DE CONFIGURAÇÃO"; DOMAINNAME=""; CLOUDFLARE_EMAIL=""; CLOUDFLARE_DNS_API_TOKEN=""; break ;; # Limpa vars e repete
                 * )     echo -e "${vermelho}Resposta inválida. Digite Y ou N.${reset}" ;;
             esac
         done
-        # Se a confirmação foi N, o loop while !$INPUT_CONFIRMED vai repetir
     done
+    echo -e "${verde}   Informações confirmadas.${reset}"
 
-    # --- A partir daqui, continua com a instalação usando as variáveis confirmadas ---
-    echo -e "${verde}Informações confirmadas. Prosseguindo com a instalação...${reset}"
-    sleep 2
-
-    # --- 1. Criar Diretórios ---
-    echo -e "${branco}=> Criando diretórios em ${INSTALL_DIR}...${reset}"
-    sudo mkdir -p "${INSTALL_DIR}/data/logs"; if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Logs dir. Abortando.${reset}"; return 1; fi
-    sudo mkdir -p "${INSTALL_DIR}/data/certs"; if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Certs dir. Abortando.${reset}"; return 1; fi
-    echo -e "${verde}   Diretórios criados.${reset}"; sleep 1
-
-    # --- 2. Criar Rede Docker ---
-    echo -e "${branco}=> Verificando/Criando rede Docker [traefik_proxy]...${reset}"
-    if ! sudo docker network inspect traefik_proxy > /dev/null 2>&1; then
-        echo -e "${amarelo}   Rede não encontrada. Criando...${reset}"
-        if sudo docker network create traefik_proxy > /dev/null; then echo -e "${verde}   Rede [traefik_proxy] criada.${reset}"; else echo -e "${vermelho}   ERRO: Falha ao criar rede Docker [traefik_proxy]. Abortando.${reset}"; return 1; fi
-    else echo -e "${verde}   Rede [traefik_proxy] já existe.${reset}"; fi
-    sleep 1
-
-    # --- 3. Baixar Arquivos de Configuração do SEU GitHub ---
-    echo -e "${branco}=> Baixando arquivos de configuração de ${GITHUB_RAW_URL}...${reset}"
-    sudo rm -f "${INSTALL_DIR}/docker-compose.yml" "${INSTALL_DIR}/data/traefik.yml"
-    sudo curl -sSL "${GITHUB_RAW_URL}/docker-compose.yml" -o "${INSTALL_DIR}/docker-compose.yml"; if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/docker-compose.yml" ]; then echo -e "${vermelho}   ERRO: Falha download docker-compose.yml. Verifique URL/arquivo no GitHub. Abortando.${reset}"; return 1; fi
-    sudo curl -sSL "${GITHUB_RAW_URL}/traefik.yml" -o "${INSTALL_DIR}/data/traefik.yml"; if [ $? -ne 0 ] || [ ! -s "${INSTALL_DIR}/data/traefik.yml" ]; then echo -e "${vermelho}   ERRO: Falha download traefik.yml. Verifique URL/arquivo no GitHub. Abortando.${reset}"; return 1; fi
-    echo -e "${verde}   Arquivos baixados com sucesso.${reset}"; sleep 1
-
-    # --- 4. Criar Arquivo .env REAL (com variáveis confirmadas) ---
-    echo -e "${branco}=> Criando arquivo .env em ${INSTALL_DIR}...${reset}"
+    # --- 5. Criar Arquivo .env REAL ---
+    _update_traefik_step "CRIANDO ARQUIVO .ENV"
+    echo -e "${branco}   Gerando ${INSTALL_DIR}/.env...${reset}"
     sudo rm -f "${INSTALL_DIR}/.env"
     sudo tee "${INSTALL_DIR}/.env" > /dev/null << EOF
 # Arquivo gerado pelo script de setup
 DOMAINNAME=${DOMAINNAME}
 PORTAINER_SUBDOMAIN=${PORTAINER_SUBDOMAIN}
 TRAEFIK_SUBDOMAIN=${TRAEFIK_SUBDOMAIN}
-LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL}
+CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
 TIMEZONE=${TIMEZONE}
 PUID=${PUID}
 PGID=${PGID}
 EOF
     if [ $? -eq 0 ] && [ -f "${INSTALL_DIR}/.env" ]; then echo -e "${verde}   Arquivo .env criado com sucesso.${reset}"; else echo -e "${vermelho}   ERRO: Falha ao criar arquivo .env. Abortando.${reset}"; return 1; fi
-    sleep 1
 
-    # --- 5. Criar acme.json ---
-    echo -e "${branco}=> Criando e configurando ${INSTALL_DIR}/data/certs/acme.json...${reset}"
+    # --- 6. Criar acme.json ---
+    _update_traefik_step "PREPARANDO ARQUIVO ACME.JSON (SSL)"
+    echo -e "${branco}   Criando e configurando ${INSTALL_DIR}/data/certs/acme.json...${reset}"
     sudo touch "${INSTALL_DIR}/data/certs/acme.json"; if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao criar acme.json. Abortando.${reset}"; return 1; fi
     sudo chmod 600 "${INSTALL_DIR}/data/certs/acme.json"; if [ $? -ne 0 ]; then echo -e "${vermelho}   ERRO: Falha ao definir permissões para acme.json. Abortando.${reset}"; return 1; fi
-    echo -e "${verde}   Arquivo acme.json pronto.${reset}"; sleep 1
+    echo -e "${verde}   Arquivo acme.json pronto.${reset}"
 
-    # --- 6. Iniciar os Containers ---
-    echo -e "${branco}=> Executando 'docker compose up -d' em ${INSTALL_DIR}... (Isso pode levar um tempo)${reset}"
+    # --- 7. Iniciar os Containers ---
+    _update_traefik_step "INICIANDO CONTAINERS TRAEFIK E PORTAINER"
+    echo -e "${branco}   Executando 'docker compose up -d' em ${INSTALL_DIR}... (Isso pode levar um tempo)${reset}"
     cd "${INSTALL_DIR}" || { echo -e "${vermelho}ERRO: Não foi possível acessar o diretório ${INSTALL_DIR}. Abortando.${reset}"; return 1; }
-    local DOCKER_COMPOSE_CMD=""
     if command -v docker &> /dev/null && command -v docker compose &> /dev/null; then DOCKER_COMPOSE_CMD="docker compose"; elif command -v docker-compose &> /dev/null; then DOCKER_COMPOSE_CMD="docker-compose"; else echo -e "${vermelho}ERRO CRÍTICO: docker compose não encontrado. Abortando.${reset}"; return 1; fi
 
     sudo ${DOCKER_COMPOSE_CMD} up -d; DOCKER_COMPOSE_STATUS=$?
     echo ""
 
-    if [ $DOCKER_COMPOSE_STATUS -eq 0 ]; then
-        echo -e "${verde}   Comando '${DOCKER_COMPOSE_CMD} up -d' executado. Aguardando inicialização...${reset}"; sleep 20
+    if [ $DOCKER_COMPOSE_STATUS -ne 0 ]; then
+         echo -e "${vermelho}   ERRO: Falha ao executar '${DOCKER_COMPOSE_CMD} up -d' (Status: ${DOCKER_COMPOSE_STATUS}).${reset}"
+         echo -e "${amarelo}          Verifique a saída do Docker Compose acima ou os logs.${reset}"
+         echo -e "${amarelo}          Comandos úteis: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} config / logs / ps${reset}"
+         echo -e "${vermelho}-----------------------------------------------------------------------${reset}"; return 1
+    fi
 
-        # --- 7. Verificar e Mostrar Feedback ---
-        echo ""; echo -e "${branco}=> Verificando status dos containers...${reset}"
-        local traefik_ok=false; local portainer_ok=false
-        if sudo docker ps --filter name=traefik_proxy --format '{{.Names}}' | grep -q 'traefik_proxy'; then echo -e "${verde}   [ OK ] Container Traefik está rodando.${reset}"; traefik_ok=true; else echo -e "${vermelho}   [ OFF ] Container Traefik NÃO está rodando.${reset}"; echo -e "${amarelo}          Verifique logs: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} logs traefik${reset}"; fi
-        if sudo docker ps --filter name=portainer_manager --format '{{.Names}}' | grep -q 'portainer_manager'; then echo -e "${verde}   [ OK ] Container Portainer está rodando.${reset}"; portainer_ok=true; else echo -e "${vermelho}   [ OFF ] Container Portainer NÃO está rodando.${reset}"; echo -e "${amarelo}          Verifique logs: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} logs portainer${reset}"; fi
+    echo -e "${verde}   Comando '${DOCKER_COMPOSE_CMD} up -d' executado. Aguardando inicialização...${reset}"; sleep 20
 
-        echo ""; echo -e "${verde}-----------------------------------------------------------------------${reset}"
-        if $traefik_ok && $portainer_ok; then
-            echo -e "${verde} Instalação de Traefik & Portainer CONCLUÍDA com Sucesso!${reset}"
-            echo -e "${branco}   Acesse o Portainer em:  ${verde}https://${PORTAINER_SUBDOMAIN}.${DOMAINNAME}${reset}"
-            echo -e "${branco}   (Crie o usuário admin no primeiro acesso)${reset}"
-            echo -e "${branco}   Dashboard Traefik em: ${verde}https://${TRAEFIK_SUBDOMAIN}.${DOMAINNAME}${reset}"
-            echo -e "${branco}   (Acesso ao dashboard depende das labels/auth no compose)${reset}"
-            echo -e "${verde}-----------------------------------------------------------------------${reset}"; return 0
-        else
-            echo -e "${vermelho} Instalação de Traefik & Portainer CONCLUÍDA com ERROS.${reset}"; echo -e "${vermelho}   Verifique os logs dos containers.${reset}"; echo -e "${vermelho}-----------------------------------------------------------------------${reset}"; return 1
-        fi
+    # --- 8. Verificar e Mostrar Feedback ---
+    _update_traefik_step "VERIFICANDO STATUS FINAL"
+    echo -e "${branco}   Verificando status dos containers...${reset}"
+    if sudo docker ps --filter name=traefik_proxy --format '{{.Names}}' | grep -q 'traefik_proxy'; then echo -e "${verde}   [ OK ] Container Traefik (traefik_proxy) está rodando.${reset}"; traefik_ok=true; else echo -e "${vermelho}   [ OFF ] Container Traefik (traefik_proxy) NÃO está rodando.${reset}"; echo -e "${amarelo}          Verifique logs: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} logs traefik${reset}"; fi
+    if sudo docker ps --filter name=portainer_manager --format '{{.Names}}' | grep -q 'portainer_manager'; then echo -e "${verde}   [ OK ] Container Portainer (portainer_manager) está rodando.${reset}"; portainer_ok=true; else echo -e "${vermelho}   [ OFF ] Container Portainer (portainer_manager) NÃO está rodando.${reset}"; echo -e "${amarelo}          Verifique logs: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} logs portainer${reset}"; fi
+
+    echo ""; echo -e "${verde}-----------------------------------------------------------------------${reset}"
+    if $traefik_ok && $portainer_ok; then
+        echo -e "${verde} Instalação de Traefik & Portainer CONCLUÍDA com Sucesso!${reset}"
+        echo -e "${branco}   Acesse o Portainer em:  ${verde}https://${PORTAINER_SUBDOMAIN}.${DOMAINNAME}${reset}"
+        echo -e "${branco}   (Crie o usuário admin no primeiro acesso)${reset}"
+        echo -e "${branco}   Dashboard Traefik em: ${verde}https://${TRAEFIK_SUBDOMAIN}.${DOMAINNAME}${reset}"
+        echo -e "${branco}   (Acesso ao dashboard depende das labels/auth no compose)${reset}"
+        echo -e "${verde}-----------------------------------------------------------------------${reset}"; return 0
     else
-        echo -e "${vermelho}   ERRO: Falha ao executar '${DOCKER_COMPOSE_CMD} up -d' (Status: ${DOCKER_COMPOSE_STATUS}).${reset}"; echo -e "${amarelo}          Verifique a saída do Docker Compose acima.${reset}"; echo -e "${amarelo}          Comandos úteis: cd ${INSTALL_DIR} && sudo ${DOCKER_COMPOSE_CMD} config / logs / ps${reset}"; echo -e "${vermelho}-----------------------------------------------------------------------${reset}"; return 1
+        echo -e "${vermelho} Instalação de Traefik & Portainer CONCLUÍDA com ERROS.${reset}"; echo -e "${vermelho}   Verifique os logs dos containers.${reset}"; echo -e "${vermelho}-----------------------------------------------------------------------${reset}"; return 1
     fi
 }
 
@@ -358,10 +356,11 @@ EOF
 # FIM DAS FUNÇÕES DE INSTALAÇÃO
 #------------------------------------------------------------------------------
 
-# O RESTANTE DO SEU SCRIPT CONTINUA AQUI...
-# (Verificações iniciais, instalação de deps, termos, loop while true, case, finalização)
-# Certifique-se que o case chame a função install_traefik_portainer como antes.
-# Certifique-se que a função mostrar_menu_ferramentas marque [ 01 ] como verde.
+# --- O RESTO DO SCRIPT CONTINUA IGUAL (Verificações, Dependências, Termos, Loop do Menu, Case, Finalização) ---
+# --- Certifique-se de que o 'case 1 | 01)' chama esta função 'install_traefik_portainer' ---
+# --- Certifique-se de que '[ 01 ]' no menu 'mostrar_menu_ferramentas' está verde ---
+
+# ... (Cole o restante do script da resposta #85 aqui) ...
 
 
 ## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
