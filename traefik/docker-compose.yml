@@ -41,7 +41,7 @@ services:
       - "traefik.enable=true"
       # --- Configuração do Dashboard/API via Labels (Exemplo) ---
       # Descomente e ajuste o domínio se quiser acessar o dashboard
-      # - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAINNAME}`)"
+      # - "traefik.http.routers.traefik-dashboard.rule=Host(`<span class="math-inline">\{TRAEFIK\_SUBDOMAIN\}\.</span>{DOMAINNAME}`)"
       # - "traefik.http.routers.traefik-dashboard.service=api@internal"
       # - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
       # - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver" # Nome do resolver definido no traefik.yml
@@ -66,7 +66,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Roteia o tráfego para o Portainer pela porta 9443 (HTTPS interna)
-      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAINNAME}`)" # Usa variável do .env
+      - "traefik.http.routers.portainer.rule=Host(`<span class="math-inline">\{PORTAINER\_SUBDOMAIN\}\.</span>{DOMAINNAME}`)"
       - "traefik.http.routers.portainer.service=portainer"
       - "traefik.http.services.portainer.loadbalancer.server.port=9443"
       - "traefik.http.services.portainer.loadbalancer.server.scheme=https" # Importante: Portainer usa HTTPS interno
