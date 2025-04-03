@@ -287,7 +287,7 @@ if ! $INPUT_CONFIRMED; then continue; fi # Volta a pedir se N
 echo -e "${verde}   Informações confirmadas.${reset}"
 sleep 1
 
-# --- 5. Criar Arquivo .env REAL (SEM CLOUDFLARE TOKEN) ---
+# --- 5. Criar Arquivo .env REAL ---
 echo -e "${branco}=> Criando arquivo .env em ${INSTALL_DIR}...${reset}"
 sudo rm -f "${INSTALL_DIR}/.env"
 sudo tee "${INSTALL_DIR}/.env" > /dev/null << EOF
