@@ -138,7 +138,7 @@ nome_instalando(){
     # FIM DO BANNER ASCII ART
     echo ""
     # Linha de texto centralizada
-    echo -e "${branco}                          Setup do Japa${reset}"
+    echo -e "${branco}                               Setup do Japa${reset}"
     # Separador Inferior (Largura Ajustada para o texto acima, ~60)
     echo -e "$azul============================================================${reset}"
     echo ""
